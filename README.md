@@ -8,6 +8,7 @@ The project implements a modular architecture to separate low-level hardware com
 
 ## Project Structure
 
+```text
 remote_car/
 ├── app/               # Application Level (Business logic, MQTT parser, PID)
 │   ├── app_header/
