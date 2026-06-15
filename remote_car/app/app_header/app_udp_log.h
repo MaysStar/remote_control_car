@@ -4,10 +4,12 @@
 #include "esp_err.h"
 #include "esp_log.h"
 
-#include "socket.h"
+#include "lwip/sockets.h"
 
 #include "bsp_log_hook.h"
 #include "bsp_config.h"
+
+#include "app_global_state.h"
 
 void app_udp_log_task(void* pvParameters);
 

@@ -21,7 +21,7 @@ void app_udp_log_task(void* pvParameters)
 
     while(1)
     {
-        if(bsp_get_new_logs_number() > 0)
+        if((bsp_get_new_logs_number() > 0) && (app_get_network_flag() == APP_GLOBAL_STATE_NETWORK_ON))
         {
             /* Get log */
             char log_buf[BSP_STACK_LOG_SIZE];
