@@ -8,13 +8,6 @@ static void app_wifi_handler(void* event_handler_arg,
                             int32_t event_id,
                             void* event_data);
 
-void app_wifi_init(void)
-{
-    bsp_register_callback(app_wifi_handler);
-
-    bsp_wifi_start();
-}
-
 /* Wifi and ip event handler */
 static void app_wifi_handler(void* event_handler_arg,
                             esp_event_base_t event_base,
@@ -63,4 +56,9 @@ static void app_wifi_handler(void* event_handler_arg,
                 break;
         }
     }
+}
+
+void app_wifi_init(void)
+{
+    bsp_register_callback(app_wifi_handler);
 }
