@@ -1,8 +1,10 @@
 #include "app_udp_log.h"
 
+/* Private variables and functions */
+static const char* TAG = "APP_LOGS";
+
 static volatile int32_t sock = -1;
 static struct sockaddr_in dect_addr;
-static const char* TAG = "APP_LOGS";
 
 /* Task for sending logs in local server via UDP */
 void app_udp_log_task(void* pvParameters)
