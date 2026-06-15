@@ -13,6 +13,7 @@
 /* The state can only be used by applications */
 
 void app_global_state_init(void);
+
 void app_set_network_flag(uint8_t new_net_fl);
 uint8_t app_get_network_flag(void);
 
