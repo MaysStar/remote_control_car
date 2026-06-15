@@ -1,7 +1,7 @@
 #include "bsp_wifi.h"
 
 /* Private variables */
-static wifi_callback_fun wifi_ip_callback = NULL;
+static volatile wifi_callback_fun wifi_ip_callback = NULL;
 
 /* Register callback from APP layer to handle WI-Fi/IP event */
 void bsp_register_callback(void (*wifi_ip_callback_fun)(void* event_handler_arg,
