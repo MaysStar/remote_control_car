@@ -9,3 +9,14 @@
 
 #Local settings and confidential data 
 **/bsp/bsp_header/bsp_config.h
+
+
+# Virtual environment
+venv/
+
+# Python cache
+**/__pycache__/
+*.pyc
+
+#configuration directory
+config/
