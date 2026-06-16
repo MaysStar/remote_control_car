@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дрон Телеметрія 3D</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        /* Прибираємо всі відступи та скроли, щоб 3D-сцена була на весь екран */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a1a1a;
+            font-family: sans-serif;
+        }
+        /* Невеличке інфо-табло поверх 3D-сцени */
+        #telemetry-data {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #00ff00;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #00ff00;
+            pointer-events: none; /* Щоб кліки мишкою проходили крізь табло на 3D-сцену */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="telemetry-data">
+        <h3>Телеметрія (Градуси):</h3>
+        <p>X (Pitch): <span id="val-x">0.00</span>°</p>
+        <p>Y (Roll): <span id="val-y">0.00</span>°</p>
+        <p>Z (Yaw): <span id="val-z">0.00</span>°</p>
+    </div>
+
+    <script>
+        // --- 1. НАЛАШТУВАННЯ СЦЕНИ THREE.JS ---
+        
+        // Створюємо світ (простір), де будуть жити об'єкти
+        const scene = new THREE.Scene();
+
+        // Створюємо камеру (око користувача)
+        // Параметри: Кут огляду (75°), Співвідношення сторін екрану, Ближня межа, Дальня межа
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        
+        // Створюємо рендерер, який буде малювати 3D за допомогою відеокарти (WebGL)
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // Додаємо полотно рендерера (canvas) на нашу HTML сторінку
+        document.body.appendChild(renderer.domElement);
+
+        // --- 2. СТВОРЕННЯ 3D ОБ'ЄКТА (НАШ СИМУЛЯТОР МАШИНКИ/ДРОНА) ---
+        
+        // Визначаємо форму об'єкта — куб розміром 2х2х2 метри (умовні одиниці Three.js)
+        const geometry = new THREE.BoxGeometry(2, 2, 2);
+        
+        // Створюємо матеріал. Wireframe: true робить його сітчастим, щоб чітко бачити обертання
+        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true });
+        
+        // Об'єднуємо форму та матеріал в один об'єкт (Mesh)
+        const cube = new THREE.Mesh(geometry, material);
+        
+        // Додаємо куб у наш віртуальний світ
+        scene.add(cube);
+
+        // Відсуваємо камеру назад на 5 одиниць, щоб ми бачили куб зі сторони, а не зсередини
+        camera.position.z = 5;
+
+        // --- 3. АНІМАЦІЙНИЙ ЦИКЛ (RENDER LOOP) ---
+        
+        // Ця функція викликається постійно (переважно 60 разів на секунду)
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Наказуємо рендереру сфотографувати нашу сцену через нашу камеру
+            renderer.setSize(window.innerWidth, window.innerHeight); // Автопідлаштування під екран
+            renderer.render(scene, camera);
+        }
+        // Запускаємо цикл анімації
+        animate();
+
+        // --- 4. ЗВ'ЯЗОК ЧЕРЕЗ WEBSOCKET ---
+        
+        // Підключаємося до нашого FastAPI бекенду
+        const ws = new WebSocket('ws://localhost:8000/ws/telemetry');
+
+        // Отримуємо доступ до елементів інтерфейсу, щоб виводити туди цифри
+        const xText = document.getElementById('val-x');
+        const yText = document.getElementById('val-y');
+        const zText = document.getElementById('val-z');
+
+        // Подія: що робити, коли від сервера прилетів новий JSON-пакет
+        ws.onmessage = function(event) {
+            // Розпаковуємо JSON-рядок назад у JavaScript об'єкт (словник)
+            const telemetry = JSON.parse(event.data);
+
+            // 1. Оновлюємо текстові цифри на екрані
+            xText.innerText = telemetry.x.toFixed(2);
+            yText.innerText = telemetry.y.toFixed(2);
+            zText.innerText = telemetry.z.toFixed(2);
+
+            // 2. МАТЕМАТИКА ОБЕРТАННЯ
+            // Увага: Наш симулятор шле КУТИ В ГРАДУСАХ (від -90 до 90).
+            // Але Three.js, як і більшість 3D-рушіїв, приймає кути в РАДІАНАХ.
+            // Формула переведення: Радіани = Градуси * (Pi / 180)
+            const toRadians = Math.PI / 180;
+
+            cube.rotation.x = telemetry.x * toRadians;
+            cube.rotation.y = telemetry.y * toRadians;
+            cube.rotation.z = telemetry.z * toRadians;
+        };
+
+        // Що робити, якщо сокет закрився
+        ws.onclose = function() {
+            console.log("З'єднання з сервером розірвано.");
+            document.getElementById('telemetry-data').style.borderColor = '#ff0000';
+        };
+    </script>
+</body>
+</html>
