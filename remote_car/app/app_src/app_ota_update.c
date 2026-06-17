@@ -59,6 +59,7 @@ void app_ota_update_task(void* pvParameters)
             else 
             {
                 ESP_LOGI(TAG, "update is successful, start reboot");
+                vTaskDelay(pdMS_TO_TICKS(1000));
                 esp_restart();
             }
         }
