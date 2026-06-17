@@ -2,8 +2,12 @@
 
 #include "bsp_nvs_flash.h"
 #include "bsp_log_hook.h"
+#include "bsp_mpu6050.h"
+
 #include "bsp_sntp.h"
 #include "bsp_wifi.h"
+
+#include "bsp_mqtt.h"
 
 #include "osal.h"
 
@@ -11,11 +15,15 @@
 #include "app_udp_log.h"
 #include "app_ota_update.h"
 
+#include "app_car_position.h"
+#include "app_mqtt_communication.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 static TaskHandle_t app_udp_log_task_handle = NULL;
 static TaskHandle_t app_ota_update_task_handle = NULL;
+static TaskHandle_t app_car_position_task_handle = NULL;
 
 void app_main()
 {
@@ -30,6 +38,9 @@ void app_main()
     ESP_ERROR_CHECK(gpio_install_isr_service(0));
     osal_init();
     bsp_https_ota_init();
+
+    /* Configure GPIO and I2C peripherals */
+    bsp_mpu6050_init();
 
     app_global_state_init();
 
@@ -52,11 +63,20 @@ void app_main()
 
     bsp_start_sntp_time(UA);
 
+    /* Configure MQTT communicaion */
+    app_mqtt_communication_init();
+    
+    /* Start MQTT communication */
+    bsp_mqtt_init();
+
     xTaskCreate(app_udp_log_task, "app_udp_log_task", 4096, NULL, 1, &app_udp_log_task_handle);
     configASSERT(app_udp_log_task_handle != NULL);
 
     xTaskCreate(app_ota_update_task, "app_ota_update_task", 4096, NULL, 2, &app_ota_update_task_handle);
     configASSERT(app_ota_update_task_handle != NULL);
+
+    xTaskCreate(app_car_position_task, "app_car_position_task", 4096, NULL, 3, &app_car_position_task_handle);
+    configASSERT(app_car_position_task_handle != NULL);
 
     while(1)
     {
