@@ -65,7 +65,9 @@ void app_car_position_task(void* pvParameters)
             }
 
             app_set_position(&curr_car_position);
-            ESP_LOGI(TAG, "roll: %03.1f, pitch: %03.1f, yaw %03.1f", curr_car_position.roll, curr_car_position.pitch, curr_car_position.yaw);
+            app_car_dir_speed curr_dir_speed = app_get_dir_speed();
+            ESP_LOGI(TAG, "dir: %d, speed: %d, speed roll: %03.1f, pitch: %03.1f, yaw %03.1f", 
+                curr_dir_speed.direction, curr_dir_speed.speed, curr_car_position.roll, curr_car_position.pitch, curr_car_position.yaw);
         }
         else
         {

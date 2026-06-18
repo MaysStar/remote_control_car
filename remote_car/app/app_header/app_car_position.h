@@ -2,6 +2,7 @@
 #define APP_CAR_POSITION_H
 
 #include "math.h"
+#include "string.h"
 
 #include "osal.h"
 
