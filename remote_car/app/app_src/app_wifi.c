@@ -71,5 +71,5 @@ static void app_wifi_handler(void* event_handler_arg,
 
 void app_wifi_init(void)
 {
-    bsp_register_callback(app_wifi_handler);
+    bsp_wifi_register_callback(app_wifi_handler);
 }
