@@ -7,8 +7,6 @@
 #include "bsp_sntp.h"
 #include "bsp_wifi.h"
 
-#include "bsp_mqtt.h"
-
 #include "osal.h"
 
 #include "app_wifi.h"
@@ -16,7 +14,7 @@
 #include "app_ota_update.h"
 
 #include "app_car_position.h"
-#include "app_mqtt_communication.h"
+#include "app_car_post_pos.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -24,6 +22,7 @@
 static TaskHandle_t app_udp_log_task_handle = NULL;
 static TaskHandle_t app_ota_update_task_handle = NULL;
 static TaskHandle_t app_car_position_task_handle = NULL;
+static TaskHandle_t app_car_http_post_position_task_handle = NULL;
 
 void app_main()
 {
@@ -63,11 +62,8 @@ void app_main()
 
     bsp_start_sntp_time(UA);
 
-    /* Configure MQTT communicaion */
-    app_mqtt_communication_init();
-    
-    /* Start MQTT communication */
-    bsp_mqtt_init();
+    /* Configure HTTP communication with visualization server */
+    bsp_http_pos_init();
 
     xTaskCreate(app_udp_log_task, "app_udp_log_task", 4096, NULL, 1, &app_udp_log_task_handle);
     configASSERT(app_udp_log_task_handle != NULL);
@@ -77,6 +73,9 @@ void app_main()
 
     xTaskCreate(app_car_position_task, "app_car_position_task", 4096, NULL, 3, &app_car_position_task_handle);
     configASSERT(app_car_position_task_handle != NULL);
+
+    xTaskCreate(app_car_http_post_position_task, "app_car_http_post_position_task", 4096, NULL, 2, &app_car_http_post_position_task_handle);
+    configASSERT(app_car_http_post_position_task_handle != NULL);
 
     while(1)
     {

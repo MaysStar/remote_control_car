@@ -3,7 +3,7 @@ import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from config.settings import ALPHA
+from .config.settings import ALPHA
 
 app = FastAPI()
 
