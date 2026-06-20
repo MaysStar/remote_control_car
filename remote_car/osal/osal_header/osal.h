@@ -9,10 +9,14 @@
 
 #include "bsp_ota_update.h"
 #include "bsp_mpu6050.h"
+#include "bsp_http_pos.h"
 
 void osal_init(void);
 
 uint8_t osal_get_ota_state(void);
 esp_err_t osal_mpu6050_get_angle(bsp_mpu6050_angle* curr_angle);
+
+void osal_http_post_pos(float roll, float pitch, float yaw);
+void osal_http_cleanup(void);
 
 #endif /* OSAL_H */

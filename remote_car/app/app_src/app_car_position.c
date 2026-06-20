@@ -65,6 +65,7 @@ void app_car_position_task(void* pvParameters)
             }
 
             app_set_position(&curr_car_position);
+
             ESP_LOGI(TAG, "roll: %03.1f, pitch: %03.1f, yaw %03.1f", curr_car_position.roll, curr_car_position.pitch, curr_car_position.yaw);
         }
         else
