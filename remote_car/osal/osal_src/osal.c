@@ -3,6 +3,7 @@
 /* Private variables and functions */
 static volatile SemaphoreHandle_t m_ota_ud_fl = NULL;
 static volatile SemaphoreHandle_t m_i2c0 = NULL;
+static volatile SemaphoreHandle_t m_mqtt_sub = NULL;
 
 static volatile SemaphoreHandle_t m_http = NULL;
 
@@ -14,6 +15,8 @@ void osal_init(void)
     m_i2c0 = xSemaphoreCreateMutex();
     configASSERT(m_i2c0 != NULL);
 
+    m_mqtt_sub = xSemaphoreCreateMutex();
+    configASSERT(m_mqtt_sub != NULL);
     m_http = xSemaphoreCreateMutex();
     configASSERT(m_http != NULL);
 }
@@ -49,6 +52,14 @@ esp_err_t osal_mpu6050_get_angle(bsp_mpu6050_angle* curr_angle)
     return ret;
 }
 
+/* Thread-safe subscribe on topic */
+void osal_mqtt_subscribe_multiple(esp_mqtt_topic_t* topic_list, int size)
+{
+    if(m_mqtt_sub != NULL)
+    {
+        xSemaphoreTake(m_mqtt_sub, portMAX_DELAY);
+        bsp_mqtt_subscribe_multiple(topic_list, size);
+        xSemaphoreGive(m_mqtt_sub);
 /* Thread-safe set car position in visualization server */
 void osal_http_post_pos(float roll, float pitch, float yaw)
 {
