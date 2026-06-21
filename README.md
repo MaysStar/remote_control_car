@@ -2,7 +2,7 @@
 
 A distributed dual-MCU robotic system featuring an **ESP32-S3** mobile chassis controlled asynchronously via MQTT by a separate **ESP32** remote control unit. Built using the **ESP-IDF** framework with a clean, decoupled 3-level software architecture (BSP, OSAL, APP).
 
-**Video demonstration of remote car**
+**Image of remote car and user control unit**
 <img width="1280" height="814" alt="top_car_and_romote_photo" src="https://github.com/user-attachments/assets/6e994290-5a0b-4c58-9713-1d8ee2496997" />
 <img width="964" height="900" alt="side_car_and_romote_photo" src="https://github.com/user-attachments/assets/e2bdc93d-d40f-45c7-82f5-a8849794c62d" />
 
