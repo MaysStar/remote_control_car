@@ -6,6 +6,7 @@ static volatile SemaphoreHandle_t m_i2c0 = NULL;
 static volatile SemaphoreHandle_t m_mqtt_sub = NULL;
 
 static volatile SemaphoreHandle_t m_http = NULL;
+static volatile SemaphoreHandle_t m_mcpwm = NULL;
 
 void osal_init(void)
 {
@@ -17,8 +18,12 @@ void osal_init(void)
 
     m_mqtt_sub = xSemaphoreCreateMutex();
     configASSERT(m_mqtt_sub != NULL);
+
     m_http = xSemaphoreCreateMutex();
     configASSERT(m_http != NULL);
+
+    m_mcpwm = xSemaphoreCreateMutex();
+    configASSERT(m_mcpwm != NULL);
 }
 
 /* Thread-safe get ota state function */
@@ -82,5 +87,46 @@ void osal_http_cleanup(void)
         xSemaphoreTake(m_http, portMAX_DELAY);
         bsp_http_cleanup();
         xSemaphoreGive(m_http);
+    }
+}
+
+/* Thread-safe function to control PWM for motors */
+void osal_mcpwm_forward(uint32_t left_percent, uint32_t right_percent)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_forward(left_percent, right_percent);
+        xSemaphoreGive(m_mcpwm);
+    }
+}
+
+void osal_mcpwm_backward(uint32_t left_percent, uint32_t right_percent)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_backward(left_percent, right_percent);
+        xSemaphoreGive(m_mcpwm);
+    }
+}
+
+void osal_mcpwm_right(uint32_t speed)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_right(speed);
+        xSemaphoreGive(m_mcpwm);
+    }
+}
+
+void osal_mcpwm_left(uint32_t speed)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_left(speed);
+        xSemaphoreGive(m_mcpwm);
     }
 }
