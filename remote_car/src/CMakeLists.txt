@@ -13,6 +13,6 @@ idf_component_register( SRCS    ${app_sources}
                                      "../osal/osal_header"
                                      "../app/app_header"
 
-                        PRIV_REQUIRES nvs_flash esp_driver_gpio esp_wifi lwip esp_https_ota mbedtls esp_http_client
+                        PRIV_REQUIRES nvs_flash esp_driver_gpio esp_wifi lwip esp_https_ota mbedtls esp_http_client esp_driver_mcpwm
                         )
 

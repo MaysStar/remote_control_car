@@ -29,6 +29,7 @@ void bsp_mqtt_init(void)
 
         .credentials.username = BSP_CONFIG_MQTT_USERNAME,
         .credentials.authentication.password = BSP_CONFIG_MQTT_PASSWORD,
+        .buffer.out_size = 2048,
 
         .broker.verification.crt_bundle_attach = esp_crt_bundle_attach,
     };

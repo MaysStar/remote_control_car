@@ -8,7 +8,7 @@ static const char* topic_speed = "speed";
 
 static uint8_t prev_speed = 0;
 
-static uint8_t subscribed_topics_count = 0;
+static bool is_mqtt_connected = false;
 
 static void app_mqtt_handler(void* event_handler_arg,
                         esp_event_base_t event_base,
@@ -36,7 +36,7 @@ static void app_mqtt_handler(void* event_handler_arg,
             break;
 
         case MQTT_EVENT_SUBSCRIBED:
-            subscribed_topics_count++;
+            is_mqtt_connected = true;
             break;
 
         case MQTT_EVENT_DATA:
@@ -45,10 +45,12 @@ static void app_mqtt_handler(void* event_handler_arg,
 
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGE(TAG, "disconnected, try to reconnect");
+            is_mqtt_connected = false;
             break;
 
         case MQTT_EVENT_ERROR:
             ESP_LOGE(TAG, "error, try to reconnect");
+            is_mqtt_connected = false;
             break;
 
         default:
@@ -67,7 +69,7 @@ void app_mqtt_communication_task(void* pvParameters)
     while(1)
     {
         /* Get subscribed topics state and publish current user data */
-        if(subscribed_topics_count == 1)
+        if(is_mqtt_connected == true)
         {
             /* Transform dir and speed in char array */
             char dir = (char)(osal_button_get_state() + 48);
@@ -88,6 +90,6 @@ void app_mqtt_communication_task(void* pvParameters)
         }
         
 
-        vTaskDelay(pdMS_TO_TICKS(50));
+        vTaskDelay(pdMS_TO_TICKS(100));
     }
 }
