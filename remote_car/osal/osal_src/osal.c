@@ -60,6 +60,9 @@ void osal_mqtt_subscribe_multiple(esp_mqtt_topic_t* topic_list, int size)
         xSemaphoreTake(m_mqtt_sub, portMAX_DELAY);
         bsp_mqtt_subscribe_multiple(topic_list, size);
         xSemaphoreGive(m_mqtt_sub);
+    }
+}
+
 /* Thread-safe set car position in visualization server */
 void osal_http_post_pos(float roll, float pitch, float yaw)
 {

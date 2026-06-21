@@ -6,6 +6,7 @@
 
 #include "bsp_sntp.h"
 #include "bsp_wifi.h"
+#include "bsp_mqtt.h"
 
 #include "osal.h"
 
@@ -15,6 +16,7 @@
 
 #include "app_car_position.h"
 #include "app_car_post_pos.h"
+#include "app_mqtt_communication.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -64,6 +66,10 @@ void app_main()
 
     /* Configure HTTP communication with visualization server */
     bsp_http_pos_init();
+
+    /* Configure MQTT communication and callback */
+    app_mqtt_communication_init();
+    bsp_mqtt_init();
 
     xTaskCreate(app_udp_log_task, "app_udp_log_task", 4096, NULL, 1, &app_udp_log_task_handle);
     configASSERT(app_udp_log_task_handle != NULL);
