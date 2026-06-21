@@ -5,6 +5,8 @@ static volatile SemaphoreHandle_t m_ota_ud_fl = NULL;
 static volatile SemaphoreHandle_t m_i2c0 = NULL;
 static volatile SemaphoreHandle_t m_mqtt_sub = NULL;
 
+static volatile SemaphoreHandle_t m_http = NULL;
+
 void osal_init(void)
 {
     m_ota_ud_fl = xSemaphoreCreateMutex();
@@ -15,6 +17,8 @@ void osal_init(void)
 
     m_mqtt_sub = xSemaphoreCreateMutex();
     configASSERT(m_mqtt_sub != NULL);
+    m_http = xSemaphoreCreateMutex();
+    configASSERT(m_http != NULL);
 }
 
 /* Thread-safe get ota state function */
@@ -56,5 +60,24 @@ void osal_mqtt_subscribe_multiple(esp_mqtt_topic_t* topic_list, int size)
         xSemaphoreTake(m_mqtt_sub, portMAX_DELAY);
         bsp_mqtt_subscribe_multiple(topic_list, size);
         xSemaphoreGive(m_mqtt_sub);
+/* Thread-safe set car position in visualization server */
+void osal_http_post_pos(float roll, float pitch, float yaw)
+{
+    if(m_http != NULL)
+    {
+        xSemaphoreTake(m_http, portMAX_DELAY);
+        bsp_http_post_pos(roll, pitch, yaw);
+        xSemaphoreGive(m_http);
+    }
+}
+
+/* Thread-safe function to close HTTP chanel */
+void osal_http_cleanup(void)
+{
+    if(m_http != NULL)
+    {
+        xSemaphoreTake(m_http, portMAX_DELAY);
+        bsp_http_cleanup();
+        xSemaphoreGive(m_http);
     }
 }

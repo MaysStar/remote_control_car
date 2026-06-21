@@ -1,73 +1,54 @@
-from contextlib import asynccontextmanager
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-import asyncio, socket
-from fastapi.responses import HTMLResponse
 import os
-from config.settings import PORT, IP_ADDRESS, ALPHA
+import asyncio
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
+from .config.settings import ALPHA
+
+app = FastAPI()
+
+# Data structure for incoming hardware telemetry validation
+class Telemetry(BaseModel):
+    roll: float
+    pitch: float
+    yaw: float
+
+# In-memory storage for smoothed telemetry data
+# Constraints: roll [-85, 85], pitch [-85, 85], yaw [-180, 180]
+current_data = {'roll': 0.0, 'pitch': 0.0, 'yaw': 0.0}
 
 
-
-current_data = {'x': 0.0, 'y': 0.0, 'z': 0.0}
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    asyncio.create_task(udp_listener())
-    yield
-
-app = FastAPI(lifespan=lifespan)
-
-
-async def udp_listener():
-
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)    
-    udp_socket.bind((IP_ADDRESS, PORT))
-    udp_socket.setblocking(False)
-
-    while True:
-        try:
-            packet, addr = udp_socket.recvfrom(1024)
-            data_str = packet.decode('utf-8')
-            parts = data_str.split(',')
-
-            for part in parts:
-                if ':' in part:
-                    key, val = part.split(':', 1)
-                    key = key.strip()
-                    
-                    if key in current_data:
-                        try:
-                            current_data[key] = ALPHA * float(val.strip()) + (1 - ALPHA) * current_data[key]
-                            
-                        except ValueError:
-                            pass
-
-            await asyncio.sleep(0.001)
-        
-        except BlockingIOError:
-            await asyncio.sleep(0.01)
-            continue
+@app.post('/api/telemetry')
+async def receive_telemetry(data: Telemetry):
+    """Accepts raw telemetry from the car via HTTP POST and applies an EMA filter."""
+    current_data['roll'] = ALPHA * data.roll + (1 - ALPHA) * current_data['roll']
+    current_data['pitch'] = ALPHA * data.pitch + (1 - ALPHA) * current_data['pitch']
+    current_data['yaw'] = ALPHA * data.yaw + (1 - ALPHA) * current_data['yaw']
     
+    # Send a confirmation response back to the micro-controller
+    return {"status": "success"}
+
+
 @app.websocket('/ws/telemetry')
 async def websocket_endpoint(websocket: WebSocket):
+    """Streams the filtered telemetry data to the 3D frontend at ~50Hz."""
     await websocket.accept()
-
     try:
         while True:
             await websocket.send_json(current_data)
             await asyncio.sleep(0.02)
-
     except WebSocketDisconnect:
-        print('User left')
-        
-
-
-@app.get('/api/telemetry')
-def get_telemetry():
-    return current_data 
+        print('Client disconnected from telemetry stream')
 
 
 @app.get('/', response_class=HTMLResponse)
 def read_root():
-    path = os.path.join('..', 'frontend', 'index.html')
+    """Serves the primary 3D wireframe visualization webpage using a foolproof absolute path."""
+    # Get the exact folder where main.py lives (backend/)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Build a solid path to the index.html
+    path = os.path.join(current_dir, '..', 'frontend', 'index.html')
+    
     with open(path, 'r', encoding='utf-8') as f:
         return f.read()
