@@ -3,7 +3,14 @@ import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from config.settings import ALPHA
+
+# Try loading ALPHA from local config, fallback to Environment Variables for cloud deploy
+try:
+    from config.settings import ALPHA
+except ModuleNotFoundError:
+    import os
+    ALPHA = float(os.getenv("ALPHA", 0.1))
+
 
 app = FastAPI()
 
