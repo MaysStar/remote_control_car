@@ -118,7 +118,7 @@
         animate();
 
         // --- 4. REAL-TIME WEBSOCKET NETWORKING ---
-        const ws = new WebSocket('ws://localhost:8000/ws/telemetry');
+        const ws = new WebSocket('wss://remotecontrolcar-production.up.railway.app/ws/telemetry');
         const rollText = document.getElementById('val-roll');
         const pitchText = document.getElementById('val-pitch');
         const yawText = document.getElementById('val-yaw');
