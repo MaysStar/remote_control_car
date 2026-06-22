@@ -3,6 +3,10 @@
 /* Private variables and functions */
 static volatile SemaphoreHandle_t m_ota_ud_fl = NULL;
 static volatile SemaphoreHandle_t m_i2c0 = NULL;
+static volatile SemaphoreHandle_t m_mqtt_sub = NULL;
+
+static volatile SemaphoreHandle_t m_http = NULL;
+static volatile SemaphoreHandle_t m_mcpwm = NULL;
 
 void osal_init(void)
 {
@@ -11,6 +15,15 @@ void osal_init(void)
 
     m_i2c0 = xSemaphoreCreateMutex();
     configASSERT(m_i2c0 != NULL);
+
+    m_mqtt_sub = xSemaphoreCreateMutex();
+    configASSERT(m_mqtt_sub != NULL);
+
+    m_http = xSemaphoreCreateMutex();
+    configASSERT(m_http != NULL);
+
+    m_mcpwm = xSemaphoreCreateMutex();
+    configASSERT(m_mcpwm != NULL);
 }
 
 /* Thread-safe get ota state function */
@@ -42,4 +55,78 @@ esp_err_t osal_mpu6050_get_angle(bsp_mpu6050_angle* curr_angle)
     }
 
     return ret;
+}
+
+/* Thread-safe subscribe on topic */
+void osal_mqtt_subscribe_multiple(esp_mqtt_topic_t* topic_list, int size)
+{
+    if(m_mqtt_sub != NULL)
+    {
+        xSemaphoreTake(m_mqtt_sub, portMAX_DELAY);
+        bsp_mqtt_subscribe_multiple(topic_list, size);
+        xSemaphoreGive(m_mqtt_sub);
+    }
+}
+
+/* Thread-safe set car position in visualization server */
+void osal_http_post_pos(float roll, float pitch, float yaw)
+{
+    if(m_http != NULL)
+    {
+        xSemaphoreTake(m_http, portMAX_DELAY);
+        bsp_http_post_pos(roll, pitch, yaw);
+        xSemaphoreGive(m_http);
+    }
+}
+
+/* Thread-safe function to close HTTP chanel */
+void osal_http_cleanup(void)
+{
+    if(m_http != NULL)
+    {
+        xSemaphoreTake(m_http, portMAX_DELAY);
+        bsp_http_cleanup();
+        xSemaphoreGive(m_http);
+    }
+}
+
+/* Thread-safe function to control PWM for motors */
+void osal_mcpwm_forward(uint32_t left_percent, uint32_t right_percent)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_forward(left_percent, right_percent);
+        xSemaphoreGive(m_mcpwm);
+    }
+}
+
+void osal_mcpwm_backward(uint32_t left_percent, uint32_t right_percent)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_backward(left_percent, right_percent);
+        xSemaphoreGive(m_mcpwm);
+    }
+}
+
+void osal_mcpwm_right(uint32_t speed)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_right(speed);
+        xSemaphoreGive(m_mcpwm);
+    }
+}
+
+void osal_mcpwm_left(uint32_t speed)
+{
+    if(m_mcpwm != NULL)
+    {
+        xSemaphoreTake(m_mcpwm, portMAX_DELAY);
+        bsp_mcpwm_left(speed);
+        xSemaphoreGive(m_mcpwm);
+    }
 }

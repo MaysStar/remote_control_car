@@ -68,3 +68,37 @@ app_car_position app_get_position(void)
 
     return curr_pos;
 }
+
+void app_set_dir(app_car_dir_state curr_dir)
+{
+    if(m_mqtt_com != NULL)
+    {
+        xSemaphoreTake(m_mqtt_com, portMAX_DELAY);
+        car_dir_speed.direction = curr_dir;
+        xSemaphoreGive(m_mqtt_com);
+    }
+}
+
+void app_set_speed(uint8_t curr_speed)
+{
+    if(m_mqtt_com != NULL)
+    {
+        xSemaphoreTake(m_mqtt_com, portMAX_DELAY);
+        car_dir_speed.speed = curr_speed;
+        xSemaphoreGive(m_mqtt_com);
+    }
+}
+
+app_car_dir_speed app_get_dir_speed(void)
+{
+    app_car_dir_speed curr_dir_speed;
+
+    if(m_mqtt_com != NULL)
+    {
+        xSemaphoreTake(m_mqtt_com, portMAX_DELAY);
+        curr_dir_speed = car_dir_speed;
+        xSemaphoreGive(m_mqtt_com);
+    }
+
+    return curr_dir_speed;
+}
