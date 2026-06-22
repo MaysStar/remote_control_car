@@ -67,6 +67,8 @@
         // Create a blank 3D group to hold all vehicle parts together as a single entity
         const carModel = new THREE.Group();
 
+        carModel.rotation.reorder('YXZ'); // Prevents axis switching during complex rotations
+
         // Define shared materials
         const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, wireframe: false }); // Green body
         const cabinMaterial = new THREE.MeshStandardMaterial({ color: 0x00aaff, wireframe: false }); // Blue windows/cabin
@@ -129,9 +131,9 @@
             yawText.innerText = telemetry.yaw.toFixed(2);
 
             // Dynamically rotate the entire vehicle group based on live Euler constraints
-            carModel.rotation.x = THREE.MathUtils.degToRad(telemetry.pitch); // Pitch -> X-axis
+            carModel.rotation.x = THREE.MathUtils.degToRad(telemetry.roll); // Roll -> X-axis
             carModel.rotation.y = THREE.MathUtils.degToRad(telemetry.yaw);   // Yaw   -> Y-axis
-            carModel.rotation.z = THREE.MathUtils.degToRad(telemetry.roll);  // Roll  -> Z-axis
+            carModel.rotation.z = THREE.MathUtils.degToRad(telemetry.pitch);  // Pitch  -> Z-axis
         };
 
         ws.onclose = function() {
