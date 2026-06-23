@@ -23,10 +23,11 @@
             border: 1px solid #00ff00;
             pointer-events: none;
             min-width: 200px;
+            transition: all 0.3s ease; /* Smooth transition for connection status colors */
         }
         #telemetry-dashboard h3 {
             margin-top: 0;
-            border-bottom: 1px solid #00ff00;
+            border-bottom: 1px solid currentColor; /* Inherits dynamic color */
             padding-bottom: 5px;
         }
         .metric {
@@ -67,7 +68,7 @@
         // Create a blank 3D group to hold all vehicle parts together as a single entity
         const carModel = new THREE.Group();
 
-        carModel.rotation.reorder('YXZ'); // Prevents axis switching during complex rotations
+        carModel.rotation.reorder('YXZ'); // Prevents axis switching during complex rotations (Gimbal lock)
 
         // Define shared materials
         const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00, wireframe: false }); // Green body
@@ -117,30 +118,62 @@
         }
         animate();
 
-        // --- 4. REAL-TIME WEBSOCKET NETWORKING ---
-        const ws = new WebSocket('wss://remotecontrolcar-production.up.railway.app/ws/telemetry');
+        // --- 4. REAL-TIME WEBSOCKET NETWORKING WITH AUTO-RECONNECT ---
+        let ws; // Global WebSocket instance
         const rollText = document.getElementById('val-roll');
         const pitchText = document.getElementById('val-pitch');
         const yawText = document.getElementById('val-yaw');
+        const dashboard = document.getElementById('telemetry-dashboard');
 
-        ws.onmessage = function(event) {
-            const telemetry = JSON.parse(event.data);
+        function connectWebSocket() {
+            console.log("Attempting to connect to cloud telemetry stream...");
+            
+            // Initiate secure WebSocket connection to Railway production environment
+            ws = new WebSocket('wss://remotecontrolcar-production.up.railway.app/ws/telemetry');
 
-            rollText.innerText = telemetry.roll.toFixed(2);
-            pitchText.innerText = telemetry.pitch.toFixed(2);
-            yawText.innerText = telemetry.yaw.toFixed(2);
+            ws.onopen = function() {
+                console.log("Successfully connected to cloud telemetry stream!");
+                // Restore green UI to indicate active connection
+                dashboard.style.borderColor = '#00ff00';
+                dashboard.style.color = '#00ff00';
+            };
 
-            // Dynamically rotate the entire vehicle group based on live Euler constraints
-            carModel.rotation.x = THREE.MathUtils.degToRad(telemetry.roll); // Roll -> X-axis
-            carModel.rotation.y = THREE.MathUtils.degToRad(telemetry.yaw);   // Yaw   -> Y-axis
-            carModel.rotation.z = THREE.MathUtils.degToRad(telemetry.pitch);  // Pitch  -> Z-axis
-        };
+            ws.onmessage = function(event) {
+                const telemetry = JSON.parse(event.data);
 
-        ws.onclose = function() {
-            console.warn("Telemetry stream disconnected from backend server.");
-            document.getElementById('telemetry-dashboard').style.borderColor = '#ff0000';
-            document.getElementById('telemetry-dashboard').style.color = '#ff0000';
-        };
+                // Update UI text values
+                rollText.innerText = telemetry.roll.toFixed(2);
+                pitchText.innerText = telemetry.pitch.toFixed(2);
+                yawText.innerText = telemetry.yaw.toFixed(2);
+
+                // Dynamically rotate the entire vehicle group based on live Euler constraints
+                if (typeof carModel !== 'undefined') {
+                    carModel.rotation.x = THREE.MathUtils.degToRad(telemetry.roll);  // Roll  -> X-axis
+                    carModel.rotation.y = THREE.MathUtils.degToRad(telemetry.yaw);   // Yaw   -> Y-axis
+                    carModel.rotation.z = THREE.MathUtils.degToRad(telemetry.pitch); // Pitch -> Z-axis
+                }
+            };
+
+            ws.onclose = function() {
+                console.warn("Telemetry stream disconnected. Reconnecting in 3 seconds...");
+                
+                // Switch UI to red to indicate connection loss
+                dashboard.style.borderColor = '#ff0000';
+                dashboard.style.color = '#ff0000';
+                
+                // Attempt to reconnect automatically after a 3-second delay
+                setTimeout(connectWebSocket, 3000);
+            };
+
+            ws.onerror = function(err) {
+                console.error("WebSocket encountered an error:", err);
+                // Force close the socket on error, which triggers onclose and the reconnect loop
+                ws.close(); 
+            };
+        }
+
+        // Initialize the connection on script load
+        connectWebSocket();
     </script>
 </body>
 </html>
