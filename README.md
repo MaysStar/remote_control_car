@@ -14,20 +14,34 @@ The project implements a modular architecture to separate low-level hardware com
 ## Project Structure
 
 ```text
-remote_car/
-├── app/               # Application Level (Business logic, MQTT parser, PID)
-│   ├── app_header/
-│   └── app_src/
-├── bsp/               # Board Support Package (Hardware drivers: PWM, I2C, NVS)
-│   ├── bsp_header/
-│   └── bsp_src/
-├── osal/              # Operating System Abstraction Layer (FreeRTOS wrappers)
-│   ├── osal_header/
-│   └── osal_src/
-├── src/
-│   ├── CMakeLists.txt # Advanced CMake build system rules
-│   └── main.c         # System entry point (app_main)
-└── platformio.ini     # Project configuration file
+remote_control_car/
+│
+├── remote_car/                        #  Embedded C Firmware (ESP32 - Vehicle Unit)
+│   ├── app/                           # Application Level (Business logic, control loops, PID)
+│   ├── bsp/                           # Board Support Package (Hardware drivers: PWM, I2C, Motors)
+│   ├── osal/                          # Operating System Abstraction Layer (FreeRTOS wrappers)
+│   ├── src/main.c                     # Vehicle system entry point (app_main)
+│   └── platformio.ini                 # PlatformIO configuration for the vehicle board
+│
+├── remote_car_user_control/           #  Embedded C Firmware (ESP32 - Remote Controller Unit)
+│   ├── app/                           # Application Level (Joystick parsing, command generation)
+│   ├── bsp/                           # Board Support Package (Buttons, ADC for sticks, radio TX)
+│   ├── lib/                           # External or shared C/C++ libraries
+│   ├── osal/                          # Operating System Abstraction Layer
+│   ├── src/main.c                     # Controller system entry point
+│   ├── partitions.csv                 # Custom flash memory partitioning map for ESP32
+│   ├── sdkconfig.esp32dev             # ESP-IDF SDK configuration variables
+│   └── platformio.ini                 # PlatformIO configuration for the remote board
+│
+├── remote_car_logs_server/            #  Diagnostic Logging Microservice
+│   └── remote_logs_server.py          # Standalone Python server for capturing and storing system events
+│
+└── remote_car_visualization_server/   #  Cloud Telemetry & 3D Web Dashboard
+    ├── backend/main.py                # FastAPI HTTP ingestion endpoint and WebSocket broadcast
+    ├── config/settings.py             # Cloud/Local environment variables and constants (e.g., ALPHA)
+    ├── frontend/index.html            # Procedural Three.js 3D vehicle model and auto-reconnecting WS client
+    ├── simulator.py                   # Continuous mock data generator for isolated UI testing
+    └── requirements.txt               # Production Python dependencies (FastAPI, Uvicorn, Pydantic)
 ```
 **Video demonstration of remote car**
 https://github.com/user-attachments/assets/7dcfcbba-0e0f-4bac-97c0-e9eeb21efebd
