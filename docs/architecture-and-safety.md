@@ -8,7 +8,7 @@ Two ESP-IDF/PlatformIO firmware projects (vehicle ESP32-S3 and controller ESP32)
 
 The vehicle starts stopped. Only complete non-retained MQTT messages on exact direction/speed topics are parsed. Direction accepts one digit 0–4; speed accepts 1–3 decimal digits in 0–100 and caps demand at 90. Invalid known commands, fragments, retained data, disconnects and MQTT errors clear direction and speed. Unknown complete topics are ignored.
 
-Direction is a heartbeat: after 500 ms without a valid direction, the next motor snapshot clears demand. Motor polling is 50 ms, so normal scheduling adds up to one cycle. This is a software bound, not a hard real-time guarantee. Zero speed bypasses PID and resets its state. Controller refreshes speed and direction every 100 ms so receiver restart does not preserve obsolete throttle. Both firmware images should be updated together.
+Direction and speed have independent freshness timestamps: after 500 ms without either valid field, the next motor snapshot clears demand. Motor polling is 50 ms, so normal scheduling adds up to one cycle. This is a software bound, not a hard real-time guarantee. Zero speed bypasses PID and resets its state. Controller refreshes speed and direction every 100 ms so receiver restart does not preserve obsolete throttle. Both firmware images should be updated together.
 
 Host tests cover parser boundaries, initialization, timeout, clearing stale throttle, disconnect stop state and tick wraparound. Mutex stubs are single-threaded: they do not validate FreeRTOS scheduling/concurrency. Firmware compilation and physical motor-stop latency still require ESP-IDF and hardware verification.
 

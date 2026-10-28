@@ -1,23 +1,18 @@
 #include "app_mqtt_communication.h"
 
 /* Private variables and functions */
-static const char* TAG = "APP_MQTT";
+static const char *TAG = "APP_MQTT";
 
-static const char* topic_dir = "direction";
-static const char* topic_speed = "speed";
-
+static const char *topic_dir = "direction";
+static const char *topic_speed = "speed";
 
 static bool is_mqtt_connected = false;
 
-static void app_mqtt_handler(void* event_handler_arg,
-                        esp_event_base_t event_base,
-                        int32_t event_id,
-                        void* event_data);
+static void app_mqtt_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
+                             void *event_data);
 
-static void app_mqtt_handler(void* event_handler_arg,
-                        esp_event_base_t event_base,
-                        int32_t event_id,
-                        void* event_data)
+static void app_mqtt_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
+                             void *event_data)
 {
     switch (event_id)
     {
@@ -63,12 +58,12 @@ void app_mqtt_communication_init(void)
 }
 
 /* Main task to communicate with remote car*/
-void app_mqtt_communication_task(void* pvParameters)
+void app_mqtt_communication_task(void *pvParameters)
 {
-    while(1)
+    while (1)
     {
         /* Get subscribed topics state and publish current user data */
-        if(is_mqtt_connected == true)
+        if (is_mqtt_connected == true)
         {
             /* Transform dir and speed in char array */
             char dir = (char)(osal_button_get_state() + 48);
@@ -81,7 +76,6 @@ void app_mqtt_communication_task(void* pvParameters)
             itoa((int)curr_speed, speed, 10);
             osal_mqtt_publish(topic_speed, speed, strlen(speed));
         }
-        
 
         vTaskDelay(pdMS_TO_TICKS(100));
     }
