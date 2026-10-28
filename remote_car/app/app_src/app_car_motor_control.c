@@ -1,4 +1,5 @@
 #include "app_car_motor_control.h"
+#include <math.h>
 
 /* Private variables and functions */
 static PID_Controller_t PID_Controller = {0};
@@ -95,6 +96,10 @@ void app_car_motor_control_task(void* pvParameters)
         app_car_dir_speed curr_car_dir_speed = app_get_dir_speed();
         app_car_position curr_car_position = app_get_position();
 
+        /* Zero demand must bypass PID: heading correction cannot start a motor. */
+        if (curr_car_dir_speed.speed == 0 || !isfinite(curr_car_position.yaw)) {
+            curr_car_dir_speed.direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP;
+        }
         switch(curr_car_dir_speed.direction)
         {
             case APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD:
@@ -152,11 +157,14 @@ void app_car_motor_control_task(void* pvParameters)
                 curr_target_angle = curr_car_position.yaw;
 
                 osal_mcpwm_forward(0);
+                app_motor_control_pid_controller_init(&PID_Controller);
 
                 break;
             }
 
             default:
+                osal_mcpwm_forward(0);
+                app_motor_control_pid_controller_init(&PID_Controller);
                 break;
         }
 

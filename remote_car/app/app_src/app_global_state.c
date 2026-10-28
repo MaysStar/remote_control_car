@@ -1,4 +1,6 @@
 #include "app_global_state.h"
+#include <stdbool.h>
+#include "freertos/task.h"
 
 /* Private variables and functions */
 static volatile SemaphoreHandle_t m_net_ip_fl = NULL;
@@ -7,7 +9,11 @@ static volatile SemaphoreHandle_t m_mqtt_com = NULL;
 
 static volatile uint8_t net_state = APP_GLOBAL_STATE_NETWORK_OFF;
 static volatile app_car_position car_position;
-static volatile app_car_dir_speed car_dir_speed;
+static volatile app_car_dir_speed car_dir_speed = {
+    .speed = 0, .direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP
+};
+static TickType_t last_direction_tick;
+static bool direction_valid = false;
 
 /* Initialize all state and data */
 void app_global_state_init(void)
@@ -75,6 +81,8 @@ void app_set_dir(app_car_dir_state curr_dir)
     {
         xSemaphoreTake(m_mqtt_com, portMAX_DELAY);
         car_dir_speed.direction = curr_dir;
+        last_direction_tick = xTaskGetTickCount();
+        direction_valid = true;
         xSemaphoreGive(m_mqtt_com);
     }
 }
@@ -91,14 +99,33 @@ void app_set_speed(uint8_t curr_speed)
 
 app_car_dir_speed app_get_dir_speed(void)
 {
-    app_car_dir_speed curr_dir_speed;
+    app_car_dir_speed curr_dir_speed = {
+        .speed = 0, .direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP
+    };
 
     if(m_mqtt_com != NULL)
     {
         xSemaphoreTake(m_mqtt_com, portMAX_DELAY);
-        curr_dir_speed = car_dir_speed;
+        if (direction_valid &&
+            (TickType_t)(xTaskGetTickCount() - last_direction_tick) < pdMS_TO_TICKS(500)) {
+            curr_dir_speed = car_dir_speed;
+        } else {
+            car_dir_speed.speed = 0;
+            car_dir_speed.direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP;
+            direction_valid = false;
+        }
         xSemaphoreGive(m_mqtt_com);
     }
 
     return curr_dir_speed;
+}
+void app_stop_motion(void)
+{
+    if (m_mqtt_com != NULL) {
+        xSemaphoreTake(m_mqtt_com, portMAX_DELAY);
+        car_dir_speed.speed = 0;
+        car_dir_speed.direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP;
+        direction_valid = false;
+        xSemaphoreGive(m_mqtt_com);
+    }
 }

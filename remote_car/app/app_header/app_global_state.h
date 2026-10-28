@@ -41,6 +41,8 @@ uint8_t app_get_network_flag(void);
 void app_set_position(app_car_position* curr_pos);
 app_car_position app_get_position(void);
 
+void app_stop_motion(void);
+
 void app_set_dir(app_car_dir_state curr_dir);
 void app_set_speed(uint8_t curr_speed);
 
