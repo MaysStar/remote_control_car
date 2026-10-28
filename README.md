@@ -23,3 +23,7 @@ remote_car/
 │   ├── CMakeLists.txt # Advanced CMake build system rules
 │   └── main.c         # System entry point (app_main)
 └── platformio.ini     # Project configuration file
+
+## Architecture and safety migration
+
+See [verified baseline, implemented command safety, migration plan and hardware acceptance](docs/architecture-and-safety.md). Host regression checks run in [Host safety checks](.github/workflows/host-safety.yml). Firmware/hardware verification remains required before driving.

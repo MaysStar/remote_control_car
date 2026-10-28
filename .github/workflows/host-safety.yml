@@ -1,0 +1,18 @@
+name: Host safety checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Parser boundary tests
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -I remote_car/app/app_header tests/test_command_parser.c -o /tmp/parser-test
+          /tmp/parser-test
+      - name: Command timeout tests
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -I tests/stubs -I remote_car/app/app_header tests/test_command_state.c remote_car/app/app_src/app_global_state.c -o /tmp/state-test
+          /tmp/state-test
+      - run: git diff --check
