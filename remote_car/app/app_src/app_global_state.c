@@ -1,5 +1,6 @@
 #include "app_global_state.h"
 #include <stdbool.h>
+#include <math.h>
 #include "freertos/task.h"
 
 /* Private variables and functions */
@@ -9,6 +10,8 @@ static SemaphoreHandle_t command_mutex = NULL;
 
 static uint8_t network_state = APP_GLOBAL_STATE_NETWORK_OFF;
 static app_car_position car_position;
+static TickType_t last_position_tick;
+static bool position_valid = false;
 static app_car_dir_speed car_dir_speed = {.speed = 0,
                                           .direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP};
 static TickType_t last_direction_tick;
@@ -67,7 +70,13 @@ void app_set_position(app_car_position *curr_pos)
     if (position_mutex != NULL && curr_pos != NULL)
     {
         xSemaphoreTake(position_mutex, portMAX_DELAY);
-        car_position = *curr_pos;
+        position_valid =
+            isfinite(curr_pos->roll) && isfinite(curr_pos->pitch) && isfinite(curr_pos->yaw);
+        if (position_valid)
+        {
+            car_position = *curr_pos;
+            last_position_tick = xTaskGetTickCount();
+        }
         xSemaphoreGive(position_mutex);
     }
 }
@@ -155,4 +164,24 @@ void app_stop_motion(void)
         app_clear_command_locked();
         xSemaphoreGive(command_mutex);
     }
+}
+
+bool app_get_valid_position(app_car_position *position)
+{
+    if (position == NULL || position_mutex == NULL)
+    {
+        return false;
+    }
+
+    xSemaphoreTake(position_mutex, portMAX_DELAY);
+    const TickType_t age = (TickType_t)(xTaskGetTickCount() - last_position_tick);
+    const bool valid = position_valid && age < pdMS_TO_TICKS(APP_POSITION_TIMEOUT_MS);
+
+    if (valid)
+    {
+        *position = car_position;
+    }
+
+    xSemaphoreGive(position_mutex);
+    return valid;
 }
