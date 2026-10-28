@@ -1,6 +1,8 @@
 #include "app_car_motor_control.h"
 #include <math.h>
 
+#define APP_MOTOR_CONTROL_PERIOD_MS 50U
+
 /* Private variables and functions */
 static PID_Controller_t PID_Controller = {0};
 static float curr_target_angle = 0.0f;
@@ -90,7 +92,7 @@ static float app_motor_control_pid_update(PID_Controller_t *PID_controler, float
 void app_car_motor_control_task(void *pvParameters)
 {
     /* Use vTaskDelayUntil to make stable dt for PID controller */
-    const TickType_t xFrequency = pdMS_TO_TICKS(50);
+    const TickType_t xFrequency = pdMS_TO_TICKS(APP_MOTOR_CONTROL_PERIOD_MS);
 
     // Initialise the xLastWakeTime variable with the current time.
     TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -100,10 +102,11 @@ void app_car_motor_control_task(void *pvParameters)
     while (1)
     {
         app_car_dir_speed curr_car_dir_speed = app_get_dir_speed();
-        app_car_position curr_car_position = app_get_position();
+        app_car_position curr_car_position = {0};
+        const bool position_valid = app_get_valid_position(&curr_car_position);
 
         /* Zero demand must bypass PID: heading correction cannot start a motor. */
-        if (curr_car_dir_speed.speed == 0 || !isfinite(curr_car_position.yaw))
+        if (curr_car_dir_speed.speed == 0 || !position_valid)
         {
             curr_car_dir_speed.direction = APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP;
         }

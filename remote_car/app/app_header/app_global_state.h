@@ -1,11 +1,15 @@
 #ifndef APP_GLOBAL_STATE_H
 #define APP_GLOBAL_STATE_H
 
+#include <stdbool.h>
+
 #include "esp_err.h"
 #include "esp_log.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+
+#define APP_POSITION_TIMEOUT_MS 100U
 
 #define APP_COMMAND_TIMEOUT_MS 500U
 #define APP_COMMAND_MAX_SPEED 90U
@@ -44,6 +48,8 @@ uint8_t app_get_network_flag(void);
 
 void app_set_position(app_car_position *curr_pos);
 app_car_position app_get_position(void);
+/* Atomically copy a finite, fresh sample; leave output unchanged on failure. */
+bool app_get_valid_position(app_car_position *position);
 
 void app_stop_motion(void);
 

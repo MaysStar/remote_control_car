@@ -1,5 +1,6 @@
 #include "app_global_state.h"
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 TickType_t test_tick;
 int main(void)
@@ -43,5 +44,28 @@ int main(void)
     app_set_speed(255);
     assert(app_get_dir_speed().speed == 0);
     app_set_position(NULL);
+    app_car_position position = {0};
+    assert(!app_get_valid_position(&position));
+    assert(!app_get_valid_position(NULL));
+    test_tick = 2000;
+    app_set_position(&position);
+    test_tick = 2099;
+    assert(app_get_valid_position(&position));
+    test_tick = 2100;
+    assert(!app_get_valid_position(&position));
+    position.yaw = NAN;
+    app_set_position(&position);
+    assert(!app_get_valid_position(&position));
+    position.yaw = 0;
+    position.roll = INFINITY;
+    app_set_position(&position);
+    assert(!app_get_valid_position(&position));
+    position.roll = 0;
+    test_tick = UINT32_MAX - 50;
+    app_set_position(&position);
+    test_tick = 48;
+    assert(app_get_valid_position(&position));
+    test_tick = 49;
+    assert(!app_get_valid_position(&position));
     puts("command state tests passed");
 }
