@@ -1,20 +1,43 @@
 #ifndef APP_COMMAND_PARSER_H
 #define APP_COMMAND_PARSER_H
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-/* Length-delimited, allocation-free protocol boundary. Never accepts prefixes. */
-static inline bool app_parse_decimal(const char *data, size_t len,
-                                     unsigned maximum, uint8_t *result)
+
+#define APP_COMMAND_MAX_DECIMAL_DIGITS 3U
+
+/* Parse an entire length-delimited unsigned decimal field.
+ * On failure, leave the output unchanged. No terminator is required.
+ */
+static inline bool app_parse_decimal(const char *data, size_t length, unsigned maximum,
+                                     uint8_t *result)
 {
-    if (!data || !result || len == 0 || len > 3) return false;
-    unsigned value = 0;
-    for (size_t i = 0; i < len; ++i) {
-        if (data[i] < '0' || data[i] > '9') return false;
-        value = value * 10 + (unsigned)(data[i] - '0');
+    if (data == NULL || result == NULL || length == 0U || length > APP_COMMAND_MAX_DECIMAL_DIGITS ||
+        maximum > UINT8_MAX)
+    {
+        return false;
     }
-    if (value > maximum) return false;
+
+    unsigned value = 0U;
+
+    for (size_t index = 0U; index < length; ++index)
+    {
+        if (data[index] < '0' || data[index] > '9')
+        {
+            return false;
+        }
+
+        value = value * 10U + (unsigned)(data[index] - '0');
+    }
+
+    if (value > maximum)
+    {
+        return false;
+    }
+
     *result = (uint8_t)value;
     return true;
 }
-#endif
+
+#endif /* APP_COMMAND_PARSER_H */
