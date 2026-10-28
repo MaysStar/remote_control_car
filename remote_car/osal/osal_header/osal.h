@@ -23,9 +23,9 @@ void osal_mqtt_subscribe_multiple(esp_mqtt_topic_t* topic_list, int size);
 void osal_http_post_pos(float roll, float pitch, float yaw);
 void osal_http_cleanup(void);
 
-void osal_mcpwm_forward(uint32_t left_percent, uint32_t right_percent);
-void osal_mcpwm_backward(uint32_t left_percent, uint32_t right_percent);
-void osal_mcpwm_right(uint32_t speed);
-void osal_mcpwm_left(uint32_t speed);
+void osal_mcpwm_forward(uint32_t speed_percent);
+void osal_mcpwm_backward(uint32_t speed_percent);
+void osal_mcpwm_right(uint32_t speed_percent);
+void osal_mcpwm_left(uint32_t speed_percent);
 
 #endif /* OSAL_H */

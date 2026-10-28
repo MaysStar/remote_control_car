@@ -102,17 +102,13 @@ void app_car_motor_control_task(void* pvParameters)
                 // Calculate angle error and set correcting offset
                 float curr_offset = app_motor_control_pid_update(&PID_Controller, curr_car_position.yaw, curr_target_angle);
 
-                int32_t left_speed = curr_car_dir_speed.speed - (int32_t)(curr_offset / 2.0f);
-                int32_t right_speed = curr_car_dir_speed.speed + (int32_t)(curr_offset / 2.0f);
+                int32_t speed = curr_car_dir_speed.speed + (int32_t)(curr_offset / 2.0f);
 
-                // Set limitation
-                left_speed = (left_speed < 0) ? 0 : left_speed;
-                left_speed = (left_speed > 90) ? 90 : left_speed;
+                // Set limitation 
+                speed = (speed < 0) ? 0 : speed;
+                speed = (speed > 90) ? 90 : speed;
 
-                right_speed = (right_speed < 0) ? 0 : right_speed;
-                right_speed = (right_speed > 90) ? 90 : right_speed;
-
-                osal_mcpwm_forward(left_speed, right_speed);
+                osal_mcpwm_forward(speed);
                 
                 break;
             }
@@ -122,17 +118,13 @@ void app_car_motor_control_task(void* pvParameters)
                 // Calculate angle error and set correcting offset
                 float curr_offset = app_motor_control_pid_update(&PID_Controller, curr_car_position.yaw, curr_target_angle);
 
-                int32_t left_speed = curr_car_dir_speed.speed + (int32_t)(curr_offset / 2.0f);
-                int32_t right_speed = curr_car_dir_speed.speed - (int32_t)(curr_offset / 2.0f);
+                int32_t speed = curr_car_dir_speed.speed + (int32_t)(curr_offset / 2.0f);
 
                 // Set limitation 
-                left_speed = (left_speed < 0) ? 0 : left_speed;
-                left_speed = (left_speed > 90) ? 90 : left_speed;
+                speed = (speed < 0) ? 0 : speed;
+                speed = (speed > 90) ? 90 : speed;
 
-                right_speed = (right_speed < 0) ? 0 : right_speed;
-                right_speed = (right_speed > 90) ? 90 : right_speed;
-
-                osal_mcpwm_backward(left_speed, right_speed);
+                osal_mcpwm_backward(speed);
                 
                 break;
             }
@@ -159,7 +151,7 @@ void app_car_motor_control_task(void* pvParameters)
             {
                 curr_target_angle = curr_car_position.yaw;
 
-                osal_mcpwm_forward(0, 0);
+                osal_mcpwm_forward(0);
 
                 break;
             }

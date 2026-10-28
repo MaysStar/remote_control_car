@@ -91,42 +91,42 @@ void osal_http_cleanup(void)
 }
 
 /* Thread-safe function to control PWM for motors */
-void osal_mcpwm_forward(uint32_t left_percent, uint32_t right_percent)
+void osal_mcpwm_forward(uint32_t speed_percent)
 {
     if(m_mcpwm != NULL)
     {
         xSemaphoreTake(m_mcpwm, portMAX_DELAY);
-        bsp_mcpwm_forward(left_percent, right_percent);
+        bsp_mcpwm_forward(speed_percent);
         xSemaphoreGive(m_mcpwm);
     }
 }
 
-void osal_mcpwm_backward(uint32_t left_percent, uint32_t right_percent)
+void osal_mcpwm_backward(uint32_t speed_percent)
 {
     if(m_mcpwm != NULL)
     {
         xSemaphoreTake(m_mcpwm, portMAX_DELAY);
-        bsp_mcpwm_backward(left_percent, right_percent);
+        bsp_mcpwm_backward(speed_percent);
         xSemaphoreGive(m_mcpwm);
     }
 }
 
-void osal_mcpwm_right(uint32_t speed)
+void osal_mcpwm_right(uint32_t speed_percent)
 {
     if(m_mcpwm != NULL)
     {
         xSemaphoreTake(m_mcpwm, portMAX_DELAY);
-        bsp_mcpwm_right(speed);
+        bsp_mcpwm_right(speed_percent);
         xSemaphoreGive(m_mcpwm);
     }
 }
 
-void osal_mcpwm_left(uint32_t speed)
+void osal_mcpwm_left(uint32_t speed_percent)
 {
     if(m_mcpwm != NULL)
     {
         xSemaphoreTake(m_mcpwm, portMAX_DELAY);
-        bsp_mcpwm_left(speed);
+        bsp_mcpwm_left(speed_percent);
         xSemaphoreGive(m_mcpwm);
     }
 }

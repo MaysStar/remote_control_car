@@ -73,7 +73,7 @@ void app_main()
     bsp_start_sntp_time(UA);
 
     /* Configure HTTP communication with visualization server */
-    bsp_http_pos_init();
+    //bsp_http_pos_init();
 
     /* Configure MQTT communication and callback */
     app_mqtt_communication_init();
