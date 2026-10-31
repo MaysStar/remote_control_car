@@ -147,10 +147,12 @@ app_car_dir_speed app_get_dir_speed(void)
         {
             curr_dir_speed = car_dir_speed;
         }
-        else
+        else if ((direction_valid && (TickType_t)(now - last_direction_tick) >= timeout) ||
+                 (speed_valid && (TickType_t)(now - last_speed_tick) >= timeout))
         {
             app_clear_command_locked();
         }
+        /* A partial fresh command remains pending; output stays STOP until both arrive. */
         xSemaphoreGive(command_mutex);
     }
 

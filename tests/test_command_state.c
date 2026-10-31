@@ -9,7 +9,6 @@ int main(void)
     app_global_state_init();
     app_set_speed(70);
     assert(app_get_dir_speed().speed == 0);
-    app_set_speed(70);
     app_set_dir(APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD);
     test_tick = 499;
     assert(app_get_dir_speed().speed == 70);
@@ -67,5 +66,18 @@ int main(void)
     assert(app_get_valid_position(&position));
     test_tick = 49;
     assert(!app_get_valid_position(&position));
+    app_stop_motion();
+    test_tick = 3000;
+    app_set_dir(APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD);
+    assert(app_get_dir_speed().speed == 0);
+    app_set_speed(60);
+    assert(app_get_dir_speed().speed == 60);
+    app_stop_motion();
+    app_set_speed(60);
+    assert(app_get_dir_speed().speed == 0);
+    test_tick += APP_COMMAND_TIMEOUT_MS;
+    assert(app_get_dir_speed().speed == 0);
+    app_set_dir(APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD);
+    assert(app_get_dir_speed().speed == 0);
     puts("command state tests passed");
 }

@@ -2,11 +2,13 @@ name: Repository checks
 on:
   push:
   pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
   workflow_dispatch:
 permissions:
   contents: read
+  pull-requests: read
 concurrency:
-  group: checks-${{ github.workflow }}-${{ github.ref }}
+  group: checks-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   safety:
@@ -15,7 +17,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Host regressions with sanitizers
+        with:
+          persist-credentials: false
+      - name: All C and Python unit tests
         env:
           SANITIZERS: address,undefined
         run: python3 scripts/check_host.py
@@ -25,6 +29,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - run: python3 -m pip install clang-format==22.1.5
       - run: python3 scripts/check_format.py
   python:
@@ -33,4 +39,55 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - run: python3 -m compileall -q scripts remote_car_visualization_server remote_car_logs_server
+        with:
+          persist-credentials: false
+      - run: python3 -m compileall -q scripts tests remote_car_visualization_server remote_car_logs_server
+  firmware:
+    name: Firmware (${{ matrix.project }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [vehicle, controller]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install platformio==6.1.18
+      - run: python scripts/build_firmware.py ${{ matrix.project }}
+  checklist:
+    name: PR checklist
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate current PR description
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/check_pr.py
+  required:
+    name: Required checks
+    if: always() && github.event_name == 'pull_request'
+    needs: [safety, formatting, python, firmware, checklist]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reject any failed, cancelled or skipped dependency
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          results = json.loads(os.environ['RESULTS'])
+          failed = [name for name, job in results.items() if job['result'] != 'success']
+          if failed:
+              raise SystemExit('Required jobs did not pass: ' + ', '.join(failed))
+          print('All required checks passed.')
+          PY

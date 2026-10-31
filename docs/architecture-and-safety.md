@@ -31,3 +31,12 @@ Lift wheels off the ground. Confirm boot stop, zero throttle with heading error,
 ## IMU freshness gate
 
 Motor control now requires a finite position sample younger than 100 ms. Boot, stale samples and non-finite samples force zero motor demand on the next control cycle. Timestamp and sample are read under the same mutex. Valid samples restore eligibility automatically; this is not a latched fault or explicit re-arm mechanism. Host tests cover boundary expiry, NaN/infinity, missing samples and tick wraparound. Hardware stop timing remains unverified.
+
+## Partial command assembly correction
+
+A motor/telemetry read between the direction and speed MQTT messages previously
+cleared the first field, potentially preventing startup under unlucky task timing.
+Fresh partial commands now remain pending while the returned motor demand stays
+STOP. Either expired field still clears the whole command. Host regression tests
+cover both arrival orders and partial expiry. This fixes the legacy transport
+without pretending that two MQTT topics form an atomic protocol.
