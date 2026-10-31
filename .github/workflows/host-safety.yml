@@ -1,9 +1,7 @@
 name: Repository checks
 on:
-  push:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review, converted_to_draft]
-  workflow_dispatch:
 permissions:
   contents: read
   pull-requests: read
@@ -61,7 +59,6 @@ jobs:
       - run: python scripts/build_firmware.py ${{ matrix.project }}
   checklist:
     name: PR checklist
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -74,7 +71,7 @@ jobs:
         run: python3 scripts/check_pr.py
   required:
     name: Required checks
-    if: always() && github.event_name == 'pull_request'
+    if: always()
     needs: [safety, formatting, python, firmware, checklist]
     runs-on: ubuntu-latest
     timeout-minutes: 5

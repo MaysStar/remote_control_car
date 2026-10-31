@@ -1,4 +1,7 @@
 #include "bsp_http_pos.h"
+#include "esp_log.h"
+#include <stdio.h>
+#include <string.h>
 
 /* Private variables and functions */
 static const char* TAG = "APP_HTTP";
