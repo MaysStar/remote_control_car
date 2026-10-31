@@ -1,7 +1,9 @@
 """Compile and execute host safety tests without requiring ESP-IDF."""
+import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -13,17 +15,19 @@ def main():
     flags = ["-std=c11", "-Wall", "-Wextra", "-Werror", "-g",
              f"-fsanitize={sanitizers}", "-fno-omit-frame-pointer",
              "-Itests/stubs", "-Iremote_car/app/app_header"]
-    cases = {
-        "parser": ["tests/test_command_parser.c"],
-        "state": ["tests/test_command_state.c",
-                  "remote_car/app/app_src/app_global_state.c"],
-    }
+    cases = json.loads((ROOT / "tests/host_tests.json").read_text())
+    discovered = {str(path.relative_to(ROOT)) for path in (ROOT / "tests").rglob("test_*.c")}
+    registered = {case[0] for case in cases.values()}
+    if not discovered or discovered != registered:
+        raise SystemExit(f"C test manifest mismatch: discovered={discovered}, registered={registered}")
     with tempfile.TemporaryDirectory(prefix="car-tests-") as directory:
         for name, sources in cases.items():
             executable = str(Path(directory) / name)
             subprocess.run([compiler, *flags, *sources, "-o", executable],
                            cwd=ROOT, check=True)
             subprocess.run([executable], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests",
+                    "-p", "test_*.py", "-v"], cwd=ROOT, check=True)
 
 
 if __name__ == "__main__":

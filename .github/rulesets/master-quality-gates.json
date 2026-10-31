@@ -41,6 +41,18 @@
           },
           {
             "context": "Python syntax"
+          },
+          {
+            "context": "Firmware (vehicle)"
+          },
+          {
+            "context": "Firmware (controller)"
+          },
+          {
+            "context": "PR checklist"
+          },
+          {
+            "context": "Required checks"
           }
         ]
       }

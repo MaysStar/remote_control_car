@@ -25,10 +25,14 @@ Install `clang-format==22.1.5` with pip, then run
 The explicit formatting manifest is incremental: add files when migrating them,
 without reformatting unrelated legacy code in a functional change.
 
-Record both firmware builds and physical tests separately. Host mutex stubs do
-not validate FreeRTOS scheduling or electrical behavior. Firmware builds currently
-require local ignored bsp_config.h files and an ESP-IDF/PlatformIO toolchain;
-the host workflow does not certify firmware compilation or hardware safety.
+Compile both firmware targets with `python3 scripts/build_firmware.py vehicle`
+and `python3 scripts/build_firmware.py controller` after installing PlatformIO
+6.1.18. These commands use dummy configuration and refuse to replace a local
+bsp_config.h. Do not flash their output. Hardware testing is outside the current
+CI scope and is not a required checklist item.
+
+All C test_*.c files require registration in tests/host_tests.json. All Python
+test_*.py files in tests run automatically. Missing C registrations fail CI.
 
 ## Reviews and merge policy
 

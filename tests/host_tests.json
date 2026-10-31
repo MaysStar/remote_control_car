@@ -1,0 +1,9 @@
+{
+  "parser": [
+    "tests/test_command_parser.c"
+  ],
+  "state": [
+    "tests/test_command_state.c",
+    "remote_car/app/app_src/app_global_state.c"
+  ]
+}
