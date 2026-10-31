@@ -1,0 +1,13 @@
+remote_car/app/app_header/app_command_parser.h
+remote_car/app/app_header/app_global_state.h
+remote_car/app/app_src/app_car_motor_control.c
+remote_car/app/app_src/app_global_state.c
+remote_car/app/app_src/app_mqtt_communication.c
+remote_car_user_control/app/app_src/app_mqtt_communication.c
+tests/stubs/esp_err.h
+tests/stubs/esp_log.h
+tests/stubs/freertos/FreeRTOS.h
+tests/stubs/freertos/semphr.h
+tests/stubs/freertos/task.h
+tests/test_command_parser.c
+tests/test_command_state.c
