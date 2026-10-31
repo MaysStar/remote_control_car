@@ -42,6 +42,9 @@ espressif32 6.12.0 (ESP-IDF 5.5), with build-only placeholders from ci/bsp_confi
 CI never flashes hardware and produces no release firmware. Hardware tests are
 not required by the checklist or these jobs.
 
+The workflow runs only for PR events: there are no skipped push/dispatch checks
+with the same names that could appear green for the same commit.
+
 The PR checklist requires each exact template item once and checked, nonempty
 sections and no additional unchecked items. Removing an item does not bypass it.
 Hidden comments and fenced examples do not count. The current body is fetched
@@ -56,3 +59,21 @@ The new rules become enforceable only after an administrator activates them.
 Workflow/checklist code is reviewed code. MaysStar must review changes to .github,
 scripts and tests before merging; a green check does not prove an author has not
 weakened the workflow in their branch. Only MaysStar should have merge authority.
+
+## Required checks to select in Settings
+
+| Check | What must pass |
+| --- | --- |
+| Host safety | Every registered C test and every discovered Python unit test |
+| Formatting | All files in the formatting migration manifest |
+| Python syntax | Compilation of Python sources without executing servers |
+| Firmware (vehicle) | ESP32-S3 compile and link with dummy CI config |
+| Firmware (controller) | ESP32 compile and link with dummy CI config |
+| PR checklist | Required text and checked declarations in the live PR body |
+| Required checks | Every job above reports success |
+
+To activate manually: Settings > Rules > Rulesets > New ruleset > Import a ruleset;
+import both JSON files from .github/rulesets, verify master is targeted and save
+Active. The quality ruleset must have an empty bypass list. The existing rule
+that only blocks deletion and force push is insufficient. A green pipeline does
+not activate these settings automatically.

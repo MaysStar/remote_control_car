@@ -1,4 +1,5 @@
 #include "bsp_mqtt.h"
+#include "esp_log.h"
 
 /* Private variables and functions */
 static const char* TAG = "BSP_MQTT";
