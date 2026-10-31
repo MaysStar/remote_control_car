@@ -1,18 +1,36 @@
-name: Host safety checks
-on: [push, pull_request]
+name: Repository checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   safety:
+    name: Host safety
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Parser boundary tests
-        run: |
-          cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -I remote_car/app/app_header tests/test_command_parser.c -o /tmp/parser-test
-          /tmp/parser-test
-      - name: Command timeout tests
-        run: |
-          cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined -I tests/stubs -I remote_car/app/app_header tests/test_command_state.c remote_car/app/app_src/app_global_state.c -o /tmp/state-test
-          /tmp/state-test
-      - run: git diff --check
+      - name: Host regressions with sanitizers
+        env:
+          SANITIZERS: address,undefined
+        run: python3 scripts/check_host.py
+  formatting:
+    name: Formatting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m pip install clang-format==22.1.5
+      - run: python3 scripts/check_format.py
+  python:
+    name: Python syntax
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 -m compileall -q scripts remote_car_visualization_server remote_car_logs_server

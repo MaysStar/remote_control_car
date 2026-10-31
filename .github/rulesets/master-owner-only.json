@@ -1,0 +1,25 @@
+{
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "refs/heads/master"
+      ],
+      "exclude": []
+    }
+  },
+  "name": "master-owner-only",
+  "bypass_actors": [
+    {
+      "actor_id": 123299437,
+      "actor_type": "User",
+      "bypass_mode": "pull_request"
+    }
+  ],
+  "rules": [
+    {
+      "type": "update"
+    }
+  ]
+}
