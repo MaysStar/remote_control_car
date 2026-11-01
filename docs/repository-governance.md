@@ -42,8 +42,17 @@ espressif32 6.12.0 (ESP-IDF 5.5), with build-only placeholders from ci/bsp_confi
 CI never flashes hardware and produces no release firmware. Hardware tests are
 not required by the checklist or these jobs.
 
-The workflow runs only for PR events: there are no skipped push/dispatch checks
-with the same names that could appear green for the same commit.
+Repository checks runs for PR events. Master checks (master-ci.yml) runs on
+push to master and supports workflow_dispatch after this file reaches master.
+All post-merge job names start with Master so they cannot satisfy the required
+PR checks. Do not require Master checks before merging: those run afterwards.
+
+To see pre-merge checks: Pull requests > the PR > Checks.
+To see post-merge checks: Actions > Master checks > branch master > a run.
+The graph contains host tests, formatting, Python syntax and both firmware builds
+feeding Master Required checks. There is no PR checklist in a push event.
+Historical master commits will not automatically receive runs; the first push
+containing master-ci.yml creates the first post-merge run.
 
 The PR checklist requires each exact template item once and checked, nonempty
 sections and no additional unchecked items. Removing an item does not bypass it.

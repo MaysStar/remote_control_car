@@ -53,6 +53,12 @@ bool app_get_valid_position(app_car_position *position);
 
 void app_stop_motion(void);
 
+/* Latched until reboot. Only the motor task may acknowledge after writing zero PWM. */
+void app_request_motion_inhibit(void);
+bool app_is_motion_inhibited(void);
+void app_confirm_motor_stopped(void);
+bool app_is_motor_stop_confirmed(void);
+
 void app_set_dir(app_car_dir_state curr_dir);
 void app_set_speed(uint8_t curr_speed);
 
