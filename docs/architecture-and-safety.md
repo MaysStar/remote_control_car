@@ -57,15 +57,21 @@ requires an intentional reboot to recover. MQTT reconnect and stop commands do
 not clear the latch. Successful completion reboots into the updated image.
 
 OTA requires HTTPS, certificate bundle validation and hostname validation, with
-automatic redirects disabled. Download errors and incomplete images abort the
-session; finish is called only on complete success. Each begun session is cleaned
+streaming HTTP APIs that never follow redirects. Only HTTP 200 with a positive
+Content-Length fitting the inactive partition is accepted; redirect responses,
+partial responses, missing lengths and oversized images are rejected before flash
+erase. Servers must serve firmware directly with Content-Length; chunked/unknown
+length downloads are deliberately unsupported.
+Download errors and incomplete images abort the session; esp_ota_end validates
+the image before esp_ota_set_boot_partition selects it for the next boot. Each begun session is cleaned
 up exactly once. Progress no longer divides by an unknown or zero image length.
 A 120-second deadline is checked between blocking network operations (15-second
 network timeout); it is not a hard real-time deadline.
 
 Host tests compile the actual OTA control flow with simulated ESP-IDF networking
 to exercise missing stop acknowledgement, tick wraparound, invalid URLs, begin,
-download and finish errors, incomplete images, timeout and success. They do not
+network, flash-write and image-validation errors, redirects, invalid sizes,
+incomplete images, timeout and success. They do not
 exercise TLS on a device, flash writes, motor electronics, signed firmware,
 secure boot or rollback protection. TLS validation alone does not authenticate
 the firmware publisher independently of the update server.
