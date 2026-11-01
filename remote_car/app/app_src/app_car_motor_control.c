@@ -101,6 +101,17 @@ void app_car_motor_control_task(void *pvParameters)
 
     while (1)
     {
+        if (app_is_motion_inhibited())
+        {
+            if (osal_stop_motors() == ESP_OK)
+            {
+                app_confirm_motor_stopped();
+            }
+            app_motor_control_pid_controller_init(&PID_Controller);
+            vTaskDelayUntil(&xLastWakeTime, xFrequency);
+            continue;
+        }
+
         app_car_dir_speed curr_car_dir_speed = app_get_dir_speed();
         app_car_position curr_car_position = {0};
         const bool position_valid = app_get_valid_position(&curr_car_position);

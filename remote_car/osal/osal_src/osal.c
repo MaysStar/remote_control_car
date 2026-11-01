@@ -130,3 +130,20 @@ void osal_mcpwm_left(uint32_t speed_percent)
         xSemaphoreGive(m_mcpwm);
     }
 }
+
+#define OSAL_MOTOR_STOP_LOCK_TIMEOUT_MS 50U
+
+esp_err_t osal_stop_motors(void)
+{
+    if (m_mcpwm == NULL)
+    {
+        return ESP_ERR_INVALID_STATE;
+    }
+    if (xSemaphoreTake(m_mcpwm, pdMS_TO_TICKS(OSAL_MOTOR_STOP_LOCK_TIMEOUT_MS)) != pdTRUE)
+    {
+        return ESP_ERR_TIMEOUT;
+    }
+    bsp_mcpwm_stop();
+    xSemaphoreGive(m_mcpwm);
+    return ESP_OK;
+}

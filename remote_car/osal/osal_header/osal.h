@@ -23,6 +23,8 @@ void osal_mqtt_subscribe_multiple(esp_mqtt_topic_t* topic_list, int size);
 void osal_http_post_pos(float roll, float pitch, float yaw);
 void osal_http_cleanup(void);
 
+/* Returns success only after the driver has disabled all PWM outputs. */
+esp_err_t osal_stop_motors(void);
 void osal_mcpwm_forward(uint32_t speed_percent);
 void osal_mcpwm_backward(uint32_t speed_percent);
 void osal_mcpwm_right(uint32_t speed_percent);

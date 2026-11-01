@@ -79,5 +79,23 @@ int main(void)
     assert(app_get_dir_speed().speed == 0);
     app_set_dir(APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD);
     assert(app_get_dir_speed().speed == 0);
+    assert(!app_is_motion_inhibited());
+    app_confirm_motor_stopped();
+    assert(!app_is_motor_stop_confirmed());
+    app_set_speed(60);
+    assert(app_get_dir_speed().speed == 60);
+    app_request_motion_inhibit();
+    assert(app_is_motion_inhibited());
+    assert(!app_is_motor_stop_confirmed());
+    assert(app_get_dir_speed().speed == 0);
+    app_set_dir(APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD);
+    app_set_speed(60);
+    assert(app_get_dir_speed().speed == 0);
+    app_confirm_motor_stopped();
+    assert(app_is_motor_stop_confirmed());
+    app_stop_motion();
+    app_request_motion_inhibit();
+    assert(app_is_motion_inhibited());
+    assert(app_is_motor_stop_confirmed());
     puts("command state tests passed");
 }

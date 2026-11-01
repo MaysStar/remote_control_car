@@ -11,3 +11,8 @@ tests/stubs/freertos/semphr.h
 tests/stubs/freertos/task.h
 tests/test_command_parser.c
 tests/test_command_state.c
+remote_car/app/app_header/app_ota_update.h
+remote_car/app/app_src/app_ota_update.c
+tests/stubs/app_ota_update.h
+tests/stubs/esp_timer.h
+tests/test_ota_update.c

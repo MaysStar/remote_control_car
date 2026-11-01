@@ -5,5 +5,9 @@
   "state": [
     "tests/test_command_state.c",
     "remote_car/app/app_src/app_global_state.c"
+  ],
+  "ota": [
+    "tests/test_ota_update.c",
+    "remote_car/app/app_src/app_ota_update.c"
   ]
 }

@@ -18,6 +18,8 @@ static TickType_t last_direction_tick;
 static bool direction_valid = false;
 static TickType_t last_speed_tick;
 static bool speed_valid = false;
+static bool motion_inhibited = false;
+static bool motor_stop_confirmed = false;
 
 /* Caller must hold command_mutex. */
 static void app_clear_command_locked(void)
@@ -106,9 +108,12 @@ void app_set_dir(app_car_dir_state curr_dir)
     if (command_mutex != NULL)
     {
         xSemaphoreTake(command_mutex, portMAX_DELAY);
-        car_dir_speed.direction = curr_dir;
-        last_direction_tick = xTaskGetTickCount();
-        direction_valid = true;
+        if (!motion_inhibited)
+        {
+            car_dir_speed.direction = curr_dir;
+            last_direction_tick = xTaskGetTickCount();
+            direction_valid = true;
+        }
         xSemaphoreGive(command_mutex);
     }
 }
@@ -124,9 +129,12 @@ void app_set_speed(uint8_t curr_speed)
     if (command_mutex != NULL)
     {
         xSemaphoreTake(command_mutex, portMAX_DELAY);
-        car_dir_speed.speed = curr_speed;
-        last_speed_tick = xTaskGetTickCount();
-        speed_valid = true;
+        if (!motion_inhibited)
+        {
+            car_dir_speed.speed = curr_speed;
+            last_speed_tick = xTaskGetTickCount();
+            speed_valid = true;
+        }
         xSemaphoreGive(command_mutex);
     }
 }
@@ -142,7 +150,8 @@ app_car_dir_speed app_get_dir_speed(void)
         const TickType_t now = xTaskGetTickCount();
         const TickType_t timeout = pdMS_TO_TICKS(APP_COMMAND_TIMEOUT_MS);
 
-        if (direction_valid && speed_valid && (TickType_t)(now - last_direction_tick) < timeout &&
+        if (!motion_inhibited && direction_valid && speed_valid &&
+            (TickType_t)(now - last_direction_tick) < timeout &&
             (TickType_t)(now - last_speed_tick) < timeout)
         {
             curr_dir_speed = car_dir_speed;
@@ -186,4 +195,52 @@ bool app_get_valid_position(app_car_position *position)
 
     xSemaphoreGive(position_mutex);
     return valid;
+}
+
+void app_request_motion_inhibit(void)
+{
+    if (command_mutex != NULL)
+    {
+        xSemaphoreTake(command_mutex, portMAX_DELAY);
+        motion_inhibited = true;
+        app_clear_command_locked();
+        xSemaphoreGive(command_mutex);
+    }
+}
+
+bool app_is_motion_inhibited(void)
+{
+    if (command_mutex == NULL)
+    {
+        return true;
+    }
+    xSemaphoreTake(command_mutex, portMAX_DELAY);
+    const bool inhibited = motion_inhibited;
+    xSemaphoreGive(command_mutex);
+    return inhibited;
+}
+
+void app_confirm_motor_stopped(void)
+{
+    if (command_mutex != NULL)
+    {
+        xSemaphoreTake(command_mutex, portMAX_DELAY);
+        if (motion_inhibited)
+        {
+            motor_stop_confirmed = true;
+        }
+        xSemaphoreGive(command_mutex);
+    }
+}
+
+bool app_is_motor_stop_confirmed(void)
+{
+    if (command_mutex == NULL)
+    {
+        return false;
+    }
+    xSemaphoreTake(command_mutex, portMAX_DELAY);
+    const bool confirmed = motor_stop_confirmed;
+    xSemaphoreGive(command_mutex);
+    return confirmed;
 }

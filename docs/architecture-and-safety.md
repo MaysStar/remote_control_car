@@ -40,3 +40,32 @@ Fresh partial commands now remain pending while the returned motor demand stays
 STOP. Either expired field still clears the whole command. Host regression tests
 cover both arrival orders and partial expiry. This fixes the legacy transport
 without pretending that two MQTT topics form an atomic protocol.
+
+## OTA motion interlock and failure handling
+
+An OTA request latches motion inhibition until reboot. Pending commands are erased
+and new direction/speed commands are ignored. The motor task writes zero PWM,
+resets its PID and acknowledges the stop. OTA waits at most 500 ms for this
+acknowledgement before opening the network connection. A missing acknowledgement
+prevents the update. This acknowledges a software PWM write, not measured wheel
+standstill: there is no physical feedback or hardware validation in these tests.
+A request racing an active motor iteration is acknowledged on the next iteration;
+the OTA transfer cannot start while that earlier iteration can still drive PWM.
+
+Only one update attempt is made per boot. Failure leaves motion inhibited and
+requires an intentional reboot to recover. MQTT reconnect and stop commands do
+not clear the latch. Successful completion reboots into the updated image.
+
+OTA requires HTTPS, certificate bundle validation and hostname validation, with
+automatic redirects disabled. Download errors and incomplete images abort the
+session; finish is called only on complete success. Each begun session is cleaned
+up exactly once. Progress no longer divides by an unknown or zero image length.
+A 120-second deadline is checked between blocking network operations (15-second
+network timeout); it is not a hard real-time deadline.
+
+Host tests compile the actual OTA control flow with simulated ESP-IDF networking
+to exercise missing stop acknowledgement, tick wraparound, invalid URLs, begin,
+download and finish errors, incomplete images, timeout and success. They do not
+exercise TLS on a device, flash writes, motor electronics, signed firmware,
+secure boot or rollback protection. TLS validation alone does not authenticate
+the firmware publisher independently of the update server.
