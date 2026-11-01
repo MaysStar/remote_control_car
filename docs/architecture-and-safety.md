@@ -75,3 +75,30 @@ incomplete images, timeout and success. They do not
 exercise TLS on a device, flash writes, motor electronics, signed firmware,
 secure boot or rollback protection. TLS validation alone does not authenticate
 the firmware publisher independently of the update server.
+
+## Testable heading calculation and motor task
+
+app_heading_pid is a pure C module: it does not include ESP-IDF, FreeRTOS or BSP.
+The motor task owns its controller instance and uses the same 50 ms period
+constant as the calculation. Gains and output limits retain their previous values.
+The derivative filter constant is 0.05 seconds (50 ms); the old 500 ms comment
+did not describe the actual code.
+
+Both heading error and measurement delta wrap across +/-180 degrees. The first
+sample initializes measurement history without a derivative kick. Non-finite
+inputs/state and arithmetic overflow return failure, clear PID history and
+produce zero output. The task stops on failure and never casts that failed
+result to a motor duty value. Controller history and target heading reset on
+direction changes so an earlier maneuver cannot affect a new one.
+
+Host integration tests execute the real motor task with simulated OSAL/state
+functions. They check zero demand, missing IMU data, invalid speed/direction,
+PID failure, speed saturation, direction changes, turns, and OTA acknowledgement
+only after a successful stop call. These simulations do not verify the physical
+PWM output or chassis behavior.
+
+The existing actuator mapping is deliberately preserved: PID correction changes
+common motor speed, not left/right differential drive. It is not proof of
+physical heading stabilization. These numerical fixes change transient behavior
+and require a raised-wheel check and subsequent low-speed tuning on hardware
+before normal driving. Hardware tests remain outside CI.

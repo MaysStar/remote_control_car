@@ -23,7 +23,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="car-tests-") as directory:
         for name, sources in cases.items():
             executable = str(Path(directory) / name)
-            subprocess.run([compiler, *flags, *sources, "-o", executable],
+            subprocess.run([compiler, *flags, *sources, "-lm", "-o", executable],
                            cwd=ROOT, check=True)
             subprocess.run([executable], cwd=ROOT, check=True)
     subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests",

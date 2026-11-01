@@ -15,6 +15,7 @@ set(app_sources
     "${CMAKE_SOURCE_DIR}/bsp/bsp_src/bsp_wifi.c"
     "${CMAKE_SOURCE_DIR}/osal/osal_src/osal.c"
     "${CMAKE_SOURCE_DIR}/app/app_src/app_car_motor_control.c"
+    "${CMAKE_SOURCE_DIR}/app/app_src/app_heading_pid.c"
     "${CMAKE_SOURCE_DIR}/app/app_src/app_car_position.c"
     "${CMAKE_SOURCE_DIR}/app/app_src/app_car_post_pos.c"
     "${CMAKE_SOURCE_DIR}/app/app_src/app_global_state.c"
