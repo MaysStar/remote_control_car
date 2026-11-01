@@ -9,5 +9,14 @@
   "ota": [
     "tests/test_ota_update.c",
     "remote_car/app/app_src/app_ota_update.c"
+  ],
+  "heading_pid": [
+    "tests/test_heading_pid.c",
+    "remote_car/app/app_src/app_heading_pid.c"
+  ],
+  "motor_task": [
+    "tests/test_motor_task.c",
+    "remote_car/app/app_src/app_car_motor_control.c",
+    "remote_car/app/app_src/app_heading_pid.c"
   ]
 }
