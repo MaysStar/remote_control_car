@@ -29,6 +29,21 @@ class ChecklistTests(unittest.TestCase):
         self.assertTrue(validate("<!--" + complete_body() + "-->"))
         self.assertTrue(validate("```markdown\n" + complete_body() + "\n```"))
 
+    def test_unclosed_and_long_fences_hide_examples(self):
+        self.assertTrue(validate("```markdown\n" + complete_body()))
+        self.assertTrue(validate("~~~~\n~~~\n" + complete_body() + "\n~~~~"))
+        self.assertTrue(validate("<!-- unfinished\n" + complete_body()))
+
+    def test_indented_code_is_not_a_declaration(self):
+        self.assertTrue(validate(complete_body().replace("- [x]", "    - [x]")))
+
+    def test_extra_markdown_bullets_must_be_checked(self):
+        for bullet in ["*", "+"]:
+            self.assertTrue(validate(complete_body() + f"\n{bullet} [ ] pending"))
+
+    def test_comment_marker_in_example_does_not_hide_pending_task(self):
+        self.assertTrue(validate(complete_body() + "\n```\n<!--\n```\n- [ ] pending"))
+
     def test_empty_section_fails(self):
         self.assertTrue(validate(complete_body().replace("Concrete explanation.", "")))
 

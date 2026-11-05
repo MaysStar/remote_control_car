@@ -17,11 +17,40 @@ REQUIRED = (
 )
 
 
+def visible_markdown(body):
+    lines = []
+    fence = None
+    in_comment = False
+    for line in (body or "").splitlines():
+        if fence is not None:
+            marker, length = fence
+            if re.fullmatch(rf" {{0,3}}{marker}{{{length},}}[ \t]*", line):
+                fence = None
+            continue
+        if not in_comment and line.startswith(("    ", "\t")):
+            continue
+        opening = re.match(r"^ {0,3}(`{3,}|~{3,})", line)
+        if opening and not in_comment:
+            marker = opening.group(1)
+            fence = marker[0], len(marker)
+            continue
+
+        visible = []
+        while line:
+            if in_comment:
+                _, end, line = line.partition("-->")
+                in_comment = not end
+            else:
+                before, start, line = line.partition("<!--")
+                visible.append(before)
+                in_comment = bool(start)
+        lines.append("".join(visible))
+    return "\n".join(lines)
+
+
 def validate(body):
-    # Ignore hidden text and fenced examples: they are not visible declarations.
-    visible = re.sub(r"<!--.*?-->", "", body or "", flags=re.S)
-    visible = re.sub(r"(?ms)^\s*(```|~~~).*?^\s*\1\s*$", "", visible)
-    checks = re.findall(r"^\s*- \[([ xX])\] (.+?)\s*$", visible, re.M)
+    visible = visible_markdown(body)
+    checks = re.findall(r"^ {0,3}[-*+] \[([ xX])\] (.+?)[ \t]*$", visible, re.M)
     errors = []
     for required in REQUIRED:
         matches = [state for state, text in checks if text == required]
