@@ -86,3 +86,25 @@ import both JSON files from .github/rulesets, verify master is targeted and save
 Active. The quality ruleset must have an empty bypass list. The existing rule
 that only blocks deletion and force push is insufficient. A green pipeline does
 not activate these settings automatically.
+
+## Apply and verify using GitHub CLI
+
+From a reviewed checkout containing the two JSON files, sign in to gh as
+MaysStar with repository administration write permission. Use Python 3
+and a gh version supporting api --paginate --slurp.
+
+    python scripts/master_rules.py
+    python scripts/master_rules.py --apply
+
+The first command reads the live settings and exits nonzero when setup is
+incomplete. The second creates only missing rulesets, quality gates first.
+It checks the owner account, reads back each configuration, and verifies the
+ruleset IDs and rule types reported as effective on master. It stops on drift
+or API failure without replacing an existing rule. If creation stops midway,
+inspect the output and rerun after resolving the error. A local test against
+a simulated repository does not activate GitHub settings.
+
+The PR checklist job loads its validator from the PR base commit. Changes to
+that script take effect for enforcement after landing on the base branch.
+The host job runs its unit tests against the proposed code. Review workflow
+changes themselves before authorizing merge.
