@@ -88,15 +88,43 @@ void vTaskDelayUntil(TickType_t *last_wake, TickType_t period)
         longjmp(task_finished, 1);
     }
 }
+static void run_cases(const motor_case *scenarios, size_t count)
+{
+    cases = scenarios;
+    case_count = count;
+    case_index = 0U;
+    writes = 0U;
+    acknowledged = false;
+    test_tick = 0U;
+    if (setjmp(task_finished) == 0)
+    {
+        app_car_motor_control_task(NULL);
+    }
+}
+
 int main(void)
 {
     const motor_case scenarios[] = {
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 70, 90, true, false, 0,
-         APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 70, false},
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 5, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 70, 80, true, false, 0,
-         APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 90, false},
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 10, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 60, 80, true, false, 0,
-         APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 60, false},
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 60, 80, true, false, 0,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 5, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 8, 80, true, false, 0,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 8, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 8, 80, true, false, 0,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 8, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 2, 80, true, false, 0,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_BACKWARD, 2, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 60, 80, true, false, 1,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 60, 80, true, false, 0,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
+        {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 60, 80, true, false, 0,
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 5, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 0, 80, true, false, 0,
          APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 60, 0, false, false, 0,
@@ -108,19 +136,37 @@ int main(void)
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 60, NAN, true, false, 0,
          APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_RIGHT, 40, 0, true, false, 0,
-         APP_MQTT_COMMUNICATION_CAR_DIRECTION_RIGHT, 40, false},
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_RIGHT, 5, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_LEFT, 40, 0, true, false, 0,
-         APP_MQTT_COMMUNICATION_CAR_DIRECTION_LEFT, 40, false},
+         APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 90, 0, true, true, 1,
          APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, false},
         {APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 90, 0, true, true, 0,
          APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP, 0, true},
     };
-    cases = scenarios;
-    case_count = sizeof(scenarios) / sizeof(scenarios[0]);
-    if (setjmp(task_finished) == 0)
+    run_cases(scenarios, sizeof(scenarios) / sizeof(scenarios[0]));
+
+    motor_case full_acceleration[21] = {0};
+    for (size_t index = 0; index < 20; ++index)
     {
-        app_car_motor_control_task(NULL);
+        uint32_t expected_speed = (uint32_t)(index + 1U) * 5U;
+        if (expected_speed > APP_COMMAND_MAX_SPEED)
+        {
+            expected_speed = APP_COMMAND_MAX_SPEED;
+        }
+        full_acceleration[index] = (motor_case){APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD,
+                                                APP_COMMAND_MAX_SPEED,
+                                                0,
+                                                true,
+                                                false,
+                                                0,
+                                                APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD,
+                                                expected_speed,
+                                                false};
     }
+    full_acceleration[20] =
+        (motor_case){APP_MQTT_COMMUNICATION_CAR_DIRECTION_FORWARD, 0, 0,    true, false, 0,
+                     APP_MQTT_COMMUNICATION_CAR_DIRECTION_STOP,    0, false};
+    run_cases(full_acceleration, sizeof(full_acceleration) / sizeof(full_acceleration[0]));
     puts("motor task integration tests passed");
 }
