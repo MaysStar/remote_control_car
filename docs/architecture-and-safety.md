@@ -124,3 +124,25 @@ The 50 ms pause does not establish that the wheels have physically stopped.
 
 Host motor-task regressions exercise the complete ramp to its limit, target
 reduction, direction switching, failed stop retry, invalid inputs and OTA inhibit.
+
+## Controller button qualification
+
+The controller accepts a single direction after two matching observations at
+least 30 ms apart. Releasing the button requests STOP at the next poll. Selecting
+a different direction starts qualification again and requests STOP meanwhile.
+The current MQTT task polls every 100 ms while connected, so a new press typically
+takes 100–200 ms to publish as movement. Transitions between polls cannot be
+observed by this polling design.
+
+Two or more pressed buttons request STOP and latch a release requirement.
+Releasing only one button keeps STOP active. Release all direction buttons, then
+press the desired button again to resume. This removes the former forward-first
+priority when controls conflict.
+
+BSP_BUTTON_DEBOUNCE_US names the qualification interval in bsp_button.c.
+Initialization clears the filter and conflict latch. The MQTT topics and numeric
+direction codes are compatible with existing vehicle firmware. The host suite
+executes the actual BSP button reader with simulated GPIO levels and time,
+including every conflicting button combination, release, bounce, direction
+changes and the exact qualification threshold. Physical contact behavior still
+needs verification on the controller.
