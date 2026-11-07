@@ -22,5 +22,10 @@
   "controller_buttons": [
     "tests/test_controller_buttons.c",
     "remote_car_user_control/bsp/bsp_src/bsp_button.c"
+  ],
+  "controller_mqtt": [
+    "tests/test_controller_mqtt.c",
+    "remote_car_user_control/app/app_src/app_mqtt_communication.c",
+    "-iquotetests/controller_stubs"
   ]
 }

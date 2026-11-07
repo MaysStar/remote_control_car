@@ -1,4 +1,7 @@
 #include "app_mqtt_communication.h"
+#include <stdatomic.h>
+#include <stdio.h>
+#include <string.h>
 
 /* Private variables and functions */
 static const char *TAG = "APP_MQTT";
@@ -6,7 +9,7 @@ static const char *TAG = "APP_MQTT";
 static const char *topic_dir = "direction";
 static const char *topic_speed = "speed";
 
-static bool is_mqtt_connected = false;
+static atomic_bool is_mqtt_connected = ATOMIC_VAR_INIT(false);
 
 static void app_mqtt_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
                              void *event_data);
@@ -14,37 +17,24 @@ static void app_mqtt_handler(void *event_handler_arg, esp_event_base_t event_bas
 static void app_mqtt_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id,
                              void *event_data)
 {
+    (void)event_handler_arg;
+    (void)event_base;
+    (void)event_data;
+
     switch (event_id)
     {
         case MQTT_EVENT_CONNECTED:
-            /* Connection is successful try to subscribe on direction and speed topics */
-            esp_mqtt_topic_t topics[2];
-            topics[0].filter = topic_dir;
-            topics[0].qos = 0;
-
-            topics[1].filter = topic_speed;
-            topics[1].qos = 0;
-
-            osal_mqtt_subscribe_multiple(topics, sizeof(topics) / sizeof(esp_mqtt_topic_t));
-
-            break;
-
-        case MQTT_EVENT_SUBSCRIBED:
-            is_mqtt_connected = true;
-            break;
-
-        case MQTT_EVENT_DATA:
-            ESP_LOGI(TAG, "get data");
+            atomic_store(&is_mqtt_connected, true);
             break;
 
         case MQTT_EVENT_DISCONNECTED:
             ESP_LOGE(TAG, "disconnected, try to reconnect");
-            is_mqtt_connected = false;
+            atomic_store(&is_mqtt_connected, false);
             break;
 
         case MQTT_EVENT_ERROR:
             ESP_LOGE(TAG, "error, try to reconnect");
-            is_mqtt_connected = false;
+            atomic_store(&is_mqtt_connected, false);
             break;
 
         default:
@@ -54,26 +44,29 @@ static void app_mqtt_handler(void *event_handler_arg, esp_event_base_t event_bas
 
 void app_mqtt_communication_init(void)
 {
+    atomic_store(&is_mqtt_connected, false);
     bsp_mqtt_register_callback(app_mqtt_handler);
 }
 
 /* Main task to communicate with remote car*/
 void app_mqtt_communication_task(void *pvParameters)
 {
+    (void)pvParameters;
+
     while (1)
     {
-        /* Get subscribed topics state and publish current user data */
-        if (is_mqtt_connected == true)
+        /* The controller publishes commands as soon as the transport connects. */
+        if (atomic_load(&is_mqtt_connected))
         {
             /* Transform dir and speed in char array */
-            char dir = (char)(osal_button_get_state() + 48);
+            char dir = (char)(osal_button_get_state() + '0');
             osal_mqtt_publish(topic_dir, &dir, 1);
 
             char speed[4];
 
             /* Refresh both fields every 100 ms, including after reconnect. */
             uint8_t curr_speed = osal_potentiometer_adc_get_value();
-            itoa((int)curr_speed, speed, 10);
+            snprintf(speed, sizeof(speed), "%u", (unsigned)curr_speed);
             osal_mqtt_publish(topic_speed, speed, strlen(speed));
         }
 
