@@ -22,3 +22,7 @@ remote_car/app/app_src/app_heading_pid.c
 tests/test_heading_pid.c
 tests/test_motor_task.c
 tests/stubs/osal.h
+remote_car_user_control/bsp/bsp_src/bsp_button.c
+remote_car_user_control/bsp/bsp_header/bsp_button.h
+tests/stubs/driver/gpio.h
+tests/test_controller_buttons.c

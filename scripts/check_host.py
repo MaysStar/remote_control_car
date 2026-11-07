@@ -14,7 +14,7 @@ def main():
     sanitizers = os.environ.get("SANITIZERS", "undefined")
     flags = ["-std=c11", "-Wall", "-Wextra", "-Werror", "-g",
              f"-fsanitize={sanitizers}", "-fno-omit-frame-pointer",
-             "-Itests/stubs", "-Iremote_car/app/app_header"]
+             "-Itests/stubs", "-Iremote_car_user_control/bsp/bsp_header", "-Iremote_car/app/app_header"]
     cases = json.loads((ROOT / "tests/host_tests.json").read_text())
     discovered = {str(path.relative_to(ROOT)) for path in (ROOT / "tests").rglob("test_*.c")}
     registered = {case[0] for case in cases.values()}

@@ -18,5 +18,9 @@
     "tests/test_motor_task.c",
     "remote_car/app/app_src/app_car_motor_control.c",
     "remote_car/app/app_src/app_heading_pid.c"
+  ],
+  "controller_buttons": [
+    "tests/test_controller_buttons.c",
+    "remote_car_user_control/bsp/bsp_src/bsp_button.c"
   ]
 }

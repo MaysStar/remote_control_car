@@ -18,4 +18,4 @@ idf_component_register( SRCS ${app_sources}
                         INCLUDE_DIRS    "../bsp/bsp_header"
                                         "../osal/osal_header"
                                         "../app/app_header"
-                        PRIV_REQUIRES nvs_flash esp_driver_gpio esp_wifi lwip mbedtls )
+                        PRIV_REQUIRES esp_timer nvs_flash esp_driver_gpio esp_wifi lwip mbedtls )
