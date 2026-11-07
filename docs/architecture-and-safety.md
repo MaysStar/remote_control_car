@@ -102,3 +102,25 @@ common motor speed, not left/right differential drive. It is not proof of
 physical heading stabilization. These numerical fixes change transient behavior
 and require a raised-wheel check and subsequent low-speed tuning on hardware
 before normal driving. Hardware tests remain outside CI.
+
+## Motor acceleration and direction changes
+
+The motor task limits increases in applied PWM to 5 percentage points per
+50 ms control iteration, including increases requested by the heading controller.
+At the nominal task rate, reaching 90% from rest takes 18 iterations (about
+0.9 seconds). Decreasing the target PWM takes effect immediately.
+
+When a moving command changes direction, the task writes zero PWM and waits a
+full control period before accepting a fresh command. A failed stop write is
+retried before switching direction. Heading history resets at this transition.
+STOP, stale commands, invalid position and the OTA motion inhibit request zero
+PWM immediately. A subsequent valid movement starts its ramp from zero.
+
+The acceleration step is named APP_MOTOR_ACCELERATION_STEP_PERCENT in
+app_car_motor_control.c and is checked at compilation against the command limit.
+This is open-loop PWM shaping. Actual wheel acceleration, low-duty motor startup
+and the appropriate reversal pause require testing on the assembled vehicle.
+The 50 ms pause does not establish that the wheels have physically stopped.
+
+Host motor-task regressions exercise the complete ramp to its limit, target
+reduction, direction switching, failed stop retry, invalid inputs and OTA inhibit.
