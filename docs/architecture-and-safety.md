@@ -146,3 +146,22 @@ executes the actual BSP button reader with simulated GPIO levels and time,
 including every conflicting button combination, release, bounce, direction
 changes and the exact qualification threshold. Physical contact behavior still
 needs verification on the controller.
+
+## Controller MQTT connection lifecycle
+
+The command publisher starts after MQTT_EVENT_CONNECTED and stops after
+MQTT_EVENT_DISCONNECTED or MQTT_EVENT_ERROR. Its connection flag is a C11 atomic
+because the MQTT event callback and publishing task access it concurrently.
+Initialization clears the flag. Subscription acknowledgements cannot enable
+publishing, and the controller no longer subscribes to its own command topics.
+
+Every connected 100 ms iteration samples and publishes both direction and speed.
+Speed uses bounded decimal formatting. Host task tests cover every speed from
+0 through 100, every direction code, initial disconnection, reconnect, error,
+late subscription acknowledgements and loss between the two publishes.
+The vehicle continues to cap valid speeds of 91–100 at 90.
+
+The two topic publications are separate operations. Connection loss can occur
+between them, and QoS 0 does not acknowledge vehicle receipt. The existing vehicle
+command timeout remains necessary. These task tests simulate transport events,
+so broker recovery and physical stop behavior still need system testing.

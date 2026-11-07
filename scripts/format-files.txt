@@ -26,3 +26,5 @@ remote_car_user_control/bsp/bsp_src/bsp_button.c
 remote_car_user_control/bsp/bsp_header/bsp_button.h
 tests/stubs/driver/gpio.h
 tests/test_controller_buttons.c
+tests/controller_stubs/app_mqtt_communication.h
+tests/test_controller_mqtt.c
